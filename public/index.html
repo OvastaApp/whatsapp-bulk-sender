@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WhatsApp Sender</title>
+<style>
+  :root {
+    --bg: #f6f7f8;
+    --card: #ffffff;
+    --text: #17202a;
+    --muted: #5f6b76;
+    --line: #e2e6ea;
+    --green: #128c4a;
+    --green-soft: #e6f4ec;
+    --red: #c0392b;
+    --red-soft: #fbeaea;
+    --amber: #a86200;
+    --amber-soft: #fdf2e1;
+    --blue: #1f5fbf;
+    --blue-soft: #e8f0fc;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Arabic", sans-serif;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 24px 16px 64px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; }
+  h2 { font-size: 16px; margin: 0 0 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+  .badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; background: var(--line); color: var(--muted); }
+  .badge .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  .badge.ok { background: var(--green-soft); color: var(--green); }
+  .badge.warn { background: var(--amber-soft); color: var(--amber); }
+  .badge.bad { background: var(--red-soft); color: var(--red); }
+
+  .connect { display: grid; grid-template-columns: auto 1fr; gap: 24px; align-items: center; }
+  .qr { width: 220px; height: 220px; border: 1px solid var(--line); border-radius: 10px; display: grid; place-items: center; background: #fff; color: var(--muted); font-size: 13px; text-align: center; padding: 8px; }
+  .qr img { width: 100%; height: 100%; image-rendering: pixelated; }
+  ol { margin: 0; padding-left: 20px; }
+  ol li { margin: 4px 0; }
+  .connected-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+  label { display: block; font-weight: 600; margin-bottom: 6px; }
+  .hint { color: var(--muted); font-size: 13px; font-weight: 400; }
+  textarea, input[type=number], input[type=text] {
+    width: 100%; font: inherit; color: inherit; background: #fff;
+    border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
+  }
+  textarea:focus, input:focus { outline: 2px solid var(--green); outline-offset: -1px; border-color: transparent; }
+  textarea { resize: vertical; }
+  #numbers { min-height: 170px; font-family: ui-monospace, Consolas, monospace; font-size: 14px; }
+  #message { min-height: 130px; }
+  .field { margin-bottom: 18px; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .meta { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 6px; font-size: 13px; color: var(--muted); }
+  .meta .over { color: var(--red); font-weight: 600; }
+  .small-input { width: 90px !important; }
+
+  .file-box { border: 1px dashed #c9d0d6; border-radius: 8px; padding: 14px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .file-box img { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; border: 1px solid var(--line); }
+  .file-name { font-weight: 600; word-break: break-all; }
+
+  button { font: inherit; font-weight: 600; border-radius: 8px; padding: 10px 18px; border: 1px solid transparent; cursor: pointer; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-primary { background: var(--green); color: #fff; }
+  .btn-primary:not(:disabled):hover { background: #0e7a40; }
+  .btn-danger { background: var(--red); color: #fff; }
+  .btn-ghost { background: #fff; border-color: var(--line); color: var(--text); }
+  .btn-ghost:not(:disabled):hover { background: var(--bg); }
+  .btn-sm { padding: 6px 12px; font-size: 13px; }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .error-box { background: var(--red-soft); color: var(--red); border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; font-size: 14px; }
+  .note-box { background: var(--amber-soft); color: #6d4300; border-radius: 8px; padding: 10px 12px; font-size: 13px; margin-top: 14px; }
+
+  .bar { height: 10px; background: var(--line); border-radius: 999px; overflow: hidden; margin: 6px 0 14px; }
+  .bar > div { height: 100%; background: var(--green); width: 0; transition: width .4s; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+  .stat { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .stat b { display: block; font-size: 22px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 12px; color: var(--muted); }
+  .stat.sent b { color: var(--green); }
+  .stat.fail b { color: var(--red); }
+  .stat.nowa b { color: var(--amber); }
+  .progress-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .table-wrap { max-height: 420px; overflow: auto; border: 1px solid var(--line); border-radius: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { position: sticky; top: 0; background: #fafbfc; font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+  td.num { font-family: ui-monospace, Consolas, monospace; white-space: nowrap; }
+  td.note { color: var(--muted); font-size: 13px; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .s-queued { background: var(--line); color: var(--muted); }
+  .s-sending { background: var(--blue-soft); color: var(--blue); }
+  .s-sent { background: var(--green-soft); color: var(--green); }
+  .s-failed, .s-invalid { background: var(--red-soft); color: var(--red); }
+  .s-not_on_whatsapp { background: var(--amber-soft); color: var(--amber); }
+  .s-skipped { background: var(--line); color: var(--muted); }
+  .hidden { display: none !important; }
+
+  @media (max-width: 640px) {
+    .connect { grid-template-columns: 1fr; justify-items: center; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>WhatsApp Sender</h1>
+    <span id="badge" class="badge"><span class="dot"></span><span id="badgeText">Starting…</span></span>
+  </header>
+
+  <!-- 1. Connect -->
+  <section class="card" id="connectCard">
+    <h2>1. Connect your WhatsApp</h2>
+    <div id="connectBox" class="connect">
+      <div class="qr" id="qr">Starting WhatsApp…<br>this can take up to a minute.</div>
+      <div>
+        <ol>
+          <li>Open WhatsApp on your phone.</li>
+          <li>Tap <b>Settings</b> (iPhone) or <b>⋮ Menu</b> (Android).</li>
+          <li>Tap <b>Linked devices</b>, then <b>Link a device</b>.</li>
+          <li>Point your phone at this QR code.</li>
+        </ol>
+        <p class="hint">You only scan once. Next time it remembers you.</p>
+      </div>
+    </div>
+    <div id="connectedBox" class="connected-row hidden">
+      <div>Connected as <b id="me"></b></div>
+      <button class="btn-ghost btn-sm" id="logoutBtn">Log out</button>
+    </div>
+    <div id="waError" class="error-box hidden" style="margin:14px 0 0"></div>
+  </section>
+
+  <!-- 2. Compose -->
+  <section class="card">
+    <h2>2. Numbers and message</h2>
+    <div id="formError" class="error-box hidden"></div>
+
+    <div class="field">
+      <label for="numbers">Phone numbers <span class="hint">— one per line, or separated by commas. Up to 200.</span></label>
+      <textarea id="numbers" placeholder="01012345678&#10;+201112223334&#10;00971501234567" spellcheck="false"></textarea>
+      <div class="meta">
+        <span id="numCount">0 / 200 numbers</span>
+        <span class="row" style="gap:8px">
+          <label for="cc" style="margin:0;font-weight:400" class="hint">Country code for numbers that start with 0:</label>
+          <input id="cc" type="text" inputmode="numeric" class="small-input" value="20">
+        </span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="message">Message</label>
+      <textarea id="message" dir="auto" placeholder="Write your message here…"></textarea>
+      <div class="meta"><span class="hint">WhatsApp styles work: *bold*, _italic_, ~strike~</span><span id="charCount">0 characters</span></div>
+    </div>
+
+    <div class="field">
+      <label>Image or file <span class="hint">— optional. The message becomes its caption.</span></label>
+      <div class="file-box">
+        <img id="filePreview" class="hidden" alt="">
+        <div style="flex:1;min-width:160px">
+          <div id="fileName" class="hint">No file chosen</div>
+        </div>
+        <input id="file" type="file" class="hidden">
+        <button type="button" class="btn-ghost btn-sm" id="pickFile">Choose file</button>
+        <button type="button" class="btn-ghost btn-sm hidden" id="removeFile">Remove</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Wait between messages</label>
+      <div class="row">
+        <input id="minDelay" type="number" min="3" max="600" value="8" class="small-input">
+        <span>to</span>
+        <input id="maxDelay" type="number" min="3" max="900" value="20" class="small-input">
+        <span>seconds (random)</span>
+      </div>
+      <div class="meta"><span id="eta" class="hint"></span></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-primary" id="startBtn" disabled>Start sending</button>
+      <span id="startHint" class="hint"></span>
+    </div>
+
+    <div class="note-box">
+      Send only to people who know you and expect your message. If many people report or block you,
+      WhatsApp can ban your number. Longer waits between messages are safer.
+    </div>
+  </section>
+
+  <!-- 3. Progress -->
+  <section class="card hidden" id="progressCard">
+    <div class="progress-head">
+      <h2 id="progressTitle">3. Sending</h2>
+      <span id="progressNote" class="hint"></span>
+    </div>
+    <div class="bar"><div id="barFill"></div></div>
+    <div class="stats">
+      <div class="stat sent"><b id="stSent">0</b><span>Sent</span></div>
+      <div class="stat nowa"><b id="stNoWa">0</b><span>Not on WhatsApp</span></div>
+      <div class="stat fail"><b id="stFail">0</b><span>Failed or invalid</span></div>
+      <div class="stat"><b id="stLeft">0</b><span>Left</span></div>
+    </div>
+    <div class="actions" style="margin-bottom:14px">
+      <button class="btn-danger" id="stopBtn">Stop</button>
+      <button class="btn-ghost" id="csvBtn">Download results (CSV)</button>
+      <button class="btn-ghost" id="clearBtn">Clear</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Number</th><th>Status</th><th>Note</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let S = null;          // latest state from the server
+let maxNumbers = 200;
+let maxFileMb = 30;
+let chosenFile = null;
+let previewUrl = null;
+let lastRowsKey = '';
+
+const STATUS_LABEL = {
+  queued: 'Waiting', sending: 'Sending…', sent: 'Sent', failed: 'Failed',
+  invalid: 'Invalid', not_on_whatsapp: 'Not on WhatsApp', skipped: 'Not sent',
+};
+
+// --- same number rules as the server, for the live count ---
+function normalizeNumber(raw, cc) {
+  const s = raw.trim();
+  let d = s.replace(/\D/g, '');
+  if (!d) return null;
+  if (s.startsWith('+')) {}
+  else if (d.startsWith('00')) d = d.slice(2);
+  else if (d.startsWith('0') && cc) d = cc + d.slice(1);
+  if (d.length < 8 || d.length > 15) return null;
+  return d;
+}
+function parseNumbers(text, cc) {
+  const pieces = [];
+  for (const part of String(text || '').split(/[\r\n,;]+/)) {
+    const p = part.trim();
+    if (!p) continue;
+    const tokens = p.split(/\s+/);
+    if (tokens.length > 1 && tokens.every((t) => t.replace(/\D/g, '').length >= 8)) pieces.push(...tokens);
+    else pieces.push(p);
+  }
+  const seen = new Set();
+  let valid = 0, invalid = 0, duplicates = 0;
+  for (const raw of pieces) {
+    const n = normalizeNumber(raw, cc);
+    const key = n || raw;
+    if (seen.has(key)) { duplicates++; continue; }
+    seen.add(key);
+    n ? valid++ : invalid++;
+  }
+  return { total: valid + invalid, valid, invalid, duplicates };
+}
+
+function fmtDuration(sec) {
+  sec = Math.max(0, Math.round(sec));
+  if (sec < 60) return `${sec} sec`;
+  const m = Math.floor(sec / 60), h = Math.floor(m / 60);
+  if (h) return `${h} h ${m % 60} min`;
+  return `${m} min`;
+}
+function fmtNumber(n) { return n ? '+' + n : ''; }
+
+function delays() {
+  let min = Math.max(3, Number($('minDelay').value) || 8);
+  let max = Math.max(min, Number($('maxDelay').value) || 20);
+  return { min, max };
+}
+
+// --- compose form ---
+function updateForm() {
+  const p = parseNumbers($('numbers').value, $('cc').value.replace(/\D/g, ''));
+  const parts = [`${p.total} / ${maxNumbers} numbers`];
+  if (p.duplicates) parts.push(`${p.duplicates} duplicate${p.duplicates > 1 ? 's' : ''} removed`);
+  if (p.invalid) parts.push(`${p.invalid} invalid`);
+  $('numCount').textContent = parts.join(' · ');
+  $('numCount').classList.toggle('over', p.total > maxNumbers);
+
+  const msg = $('message').value;
+  $('charCount').textContent = `${msg.trim().length} characters`;
+
+  const { min, max } = delays();
+  $('eta').textContent = p.valid ? `About ${fmtDuration(p.valid * ((min + max) / 2 + 2))} for ${p.valid} number${p.valid > 1 ? 's' : ''}.` : '';
+
+  const running = !!(S && S.job && S.job.running);
+  const ready = !!(S && S.wa === 'ready');
+  let hint = '';
+  if (!ready) hint = 'Connect WhatsApp first.';
+  else if (running) hint = 'Sending is in progress.';
+  else if (!p.valid) hint = 'Add at least one valid number.';
+  else if (p.total > maxNumbers) hint = `Remove ${p.total - maxNumbers} number${p.total - maxNumbers > 1 ? 's' : ''} (limit is ${maxNumbers}).`;
+  else if (!msg.trim() && !chosenFile) hint = 'Write a message or attach a file.';
+  $('startHint').textContent = hint;
+  $('startBtn').disabled = !!hint;
+
+  for (const id of ['numbers', 'cc', 'message', 'minDelay', 'maxDelay', 'pickFile', 'removeFile']) $(id).disabled = running;
+  return p;
+}
+
+['numbers', 'cc', 'message', 'minDelay', 'maxDelay'].forEach((id) => $(id).addEventListener('input', updateForm));
+
+$('pickFile').onclick = () => $('file').click();
+$('file').onchange = () => {
+  const f = $('file').files[0];
+  if (!f) return;
+  if (f.size > maxFileMb * 1024 * 1024) {
+    showFormError(`That file is ${(f.size / 1048576).toFixed(1)} MB. The limit is ${maxFileMb} MB.`);
+    $('file').value = '';
+    return;
+  }
+  chosenFile = f;
+  showFile();
+};
+$('removeFile').onclick = () => { chosenFile = null; $('file').value = ''; showFile(); };
+
+function showFile() {
+  if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = null; }
+  const img = $('filePreview');
+  if (chosenFile) {
+    $('fileName').innerHTML = '';
+    const name = document.createElement('div'); name.className = 'file-name'; name.textContent = chosenFile.name;
+    const size = document.createElement('div'); size.className = 'hint'; size.textContent = `${(chosenFile.size / 1048576).toFixed(2)} MB`;
+    $('fileName').append(name, size);
+    $('fileName').classList.remove('hint');
+    if (chosenFile.type.startsWith('image/')) { previewUrl = URL.createObjectURL(chosenFile); img.src = previewUrl; img.classList.remove('hidden'); }
+    else img.classList.add('hidden');
+    $('removeFile').classList.remove('hidden');
+    $('pickFile').textContent = 'Change file';
+  } else {
+    $('fileName').textContent = 'No file chosen';
+    $('fileName').classList.add('hint');
+    img.classList.add('hidden');
+    $('removeFile').classList.add('hidden');
+    $('pickFile').textContent = 'Choose file';
+  }
+  updateForm();
+}
+
+function showFormError(text) {
+  $('formError').textContent = text || '';
+  $('formError').classList.toggle('hidden', !text);
+}
+
+$('startBtn').onclick = async () => {
+  const p = updateForm();
+  if ($('startBtn').disabled) return;
+  const what = chosenFile ? `"${chosenFile.name}"${$('message').value.trim() ? ' with your message' : ''}` : 'your message';
+  if (!confirm(`Send ${what} to ${p.valid} number${p.valid > 1 ? 's' : ''}, one by one?`)) return;
+  showFormError('');
+  const { min, max } = delays();
+  const fd = new FormData();
+  fd.append('numbers', $('numbers').value);
+  fd.append('countryCode', $('cc').value);
+  fd.append('message', $('message').value);
+  fd.append('minDelay', min);
+  fd.append('maxDelay', max);
+  if (chosenFile) fd.append('file', chosenFile);
+  $('startBtn').disabled = true;
+  $('startHint').textContent = 'Starting…';
+  try {
+    const r = await fetch('/api/send', { method: 'POST', body: fd });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || 'Could not start sending.');
+    $('progressCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (e) {
+    showFormError(e.message);
+  }
+  updateForm();
+};
+
+$('stopBtn').onclick = () => fetch('/api/stop', { method: 'POST' });
+$('clearBtn').onclick = () => fetch('/api/clear', { method: 'POST' });
+$('logoutBtn').onclick = () => {
+  if (confirm('Log out this WhatsApp? You will need to scan the QR code again.')) fetch('/api/logout', { method: 'POST' });
+};
+
+$('csvBtn').onclick = () => {
+  if (!S || !S.job) return;
+  const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const lines = [['#', 'Number', 'As typed', 'Status', 'Note', 'Time'].map(esc).join(',')];
+  S.job.items.forEach((it, i) => {
+    lines.push([i + 1, fmtNumber(it.number), it.raw, STATUS_LABEL[it.status] || it.status, it.note, it.time ? new Date(it.time).toLocaleString() : ''].map(esc).join(','));
+  });
+  const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `whatsapp-results-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.csv`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+};
+
+// --- live state from the server ---
+function renderConnection() {
+  const b = $('badge');
+  b.className = 'badge';
+  let text = 'Starting…';
+  const showQrBox = S.wa !== 'ready';
+  $('connectBox').classList.toggle('hidden', !showQrBox);
+  $('connectedBox').classList.toggle('hidden', showQrBox);
+
+  if (S.wa === 'ready') { b.classList.add('ok'); text = 'Connected'; $('me').textContent = fmtNumber(S.me); }
+  else if (S.wa === 'qr') { b.classList.add('warn'); text = 'Scan the QR code'; }
+  else if (S.wa === 'loading') { b.classList.add('warn'); text = S.loading ? `Loading chats ${S.loading}%` : 'Logging in…'; }
+  else if (S.wa === 'disconnected') { b.classList.add('bad'); text = 'Disconnected — reconnecting'; }
+  else if (S.wa === 'error') { b.classList.add('bad'); text = 'Problem'; }
+  $('badgeText').textContent = text;
+
+  const qr = $('qr');
+  if (S.wa === 'qr' && S.qr) {
+    if (!qr.querySelector('img')) { qr.innerHTML = ''; qr.appendChild(document.createElement('img')).alt = 'WhatsApp QR code'; }
+    qr.querySelector('img').src = S.qr;
+  } else if (showQrBox) {
+    qr.textContent = S.wa === 'loading' ? 'Scanned. Loading your chats…' : 'Starting WhatsApp… this can take up to a minute.';
+  }
+
+  $('waError').textContent = S.error || '';
+  $('waError').classList.toggle('hidden', !S.error);
+}
+
+function renderJob() {
+  const job = S.job;
+  $('progressCard').classList.toggle('hidden', !job);
+  if (!job) { lastRowsKey = ''; return; }
+
+  const c = { sent: 0, nowa: 0, fail: 0, left: 0 };
+  for (const it of job.items) {
+    if (it.status === 'sent') c.sent++;
+    else if (it.status === 'not_on_whatsapp') c.nowa++;
+    else if (it.status === 'failed' || it.status === 'invalid') c.fail++;
+    else if (it.status === 'queued' || it.status === 'sending') c.left++;
+  }
+  const done = job.items.length - c.left;
+  $('barFill').style.width = `${(done / job.items.length) * 100}%`;
+  $('stSent').textContent = c.sent;
+  $('stNoWa').textContent = c.nowa;
+  $('stFail').textContent = c.fail;
+  $('stLeft').textContent = c.left;
+
+  if (job.running) {
+    $('progressTitle').textContent = job.stopRequested ? '3. Stopping…' : '3. Sending';
+    const avg = (job.minDelay + job.maxDelay) / 2 + 2;
+    $('progressNote').textContent = `${done} of ${job.items.length} done · about ${fmtDuration(c.left * avg)} left`;
+  } else {
+    $('progressTitle').textContent = '3. Finished';
+    $('progressNote').textContent = job.error || `${c.sent} sent out of ${job.items.length}`;
+  }
+  $('stopBtn').classList.toggle('hidden', !job.running);
+  $('stopBtn').disabled = !!job.stopRequested;
+  $('clearBtn').classList.toggle('hidden', job.running);
+
+  const key = job.id + ':' + job.items.map((it) => it.status).join(',');
+  if (key === lastRowsKey) return;
+  lastRowsKey = key;
+  const tb = $('rows');
+  tb.innerHTML = '';
+  job.items.forEach((it, i) => {
+    const tr = document.createElement('tr');
+    const td = (text, cls) => { const el = document.createElement('td'); if (cls) el.className = cls; el.textContent = text; tr.appendChild(el); return el; };
+    td(i + 1);
+    td(it.number ? fmtNumber(it.number) : it.raw, 'num');
+    const st = td('');
+    const pill = document.createElement('span');
+    pill.className = `pill s-${it.status}`;
+    pill.textContent = STATUS_LABEL[it.status] || it.status;
+    st.appendChild(pill);
+    td(it.note || '', 'note');
+    tb.appendChild(tr);
+  });
+  const active = tb.querySelector('.s-sending');
+  if (active) active.closest('tr').scrollIntoView({ block: 'nearest' });
+}
+
+// countdown to next message
+setInterval(() => {
+  if (!S || !S.job || !S.job.running || !S.job.nextAt) return;
+  const sec = Math.max(0, Math.ceil((S.job.nextAt - Date.now()) / 1000));
+  const base = $('progressNote').textContent.split(' · next in')[0];
+  $('progressNote').textContent = `${base} · next in ${sec}s`;
+}, 500);
+
+function connect() {
+  const es = new EventSource('/api/events');
+  es.onmessage = (e) => {
+    S = JSON.parse(e.data);
+    maxNumbers = S.maxNumbers || maxNumbers;
+    maxFileMb = S.maxFileMb || maxFileMb;
+    renderConnection();
+    renderJob();
+    updateForm();
+  };
+  es.onerror = () => {
+    $('badge').className = 'badge bad';
+    $('badgeText').textContent = 'App closed — start it again';
+  };
+}
+connect();
+updateForm();
+</script>
+</body>
+</html>

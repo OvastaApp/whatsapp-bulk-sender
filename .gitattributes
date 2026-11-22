@@ -1,0 +1,4 @@
+* text=auto
+# Windows batch files and the notes must keep Windows line endings, also in GitHub's Download ZIP
+*.bat text eol=crlf
+*.txt text eol=crlf

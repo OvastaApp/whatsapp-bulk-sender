@@ -1,0 +1,47 @@
+WHATSAPP SENDER
+===============
+
+Send one message (and a photo or file if you want) to up to 200 numbers,
+one by one, from YOUR OWN WhatsApp.
+
+Works on Windows 10 and 11.
+
+
+FIRST TIME
+----------
+1. Unzip this folder to an easy place, like your Desktop.
+   Do not run it from inside the zip.
+
+2. Double-click "start.bat".
+   - If it says Node.js is missing, press Y and follow the steps.
+     Then double-click "start.bat" again.
+   - The first start takes about a minute. It downloads what it needs.
+
+3. Your browser opens the WhatsApp Sender page.
+
+4. On your phone, open WhatsApp:
+   iPhone:  Settings > Linked devices > Link a device
+   Android: the 3-dots menu > Linked devices > Link a device
+   Then scan the QR code on the page.
+   You only do this once. Next time it remembers you.
+
+
+EVERY TIME
+----------
+1. Double-click "start.bat".
+2. Paste the numbers, one per line.
+   Numbers that start with 0 get the country code added (20 = Egypt).
+   Change the "country code" box if your numbers are from another country.
+3. Write your message. Add a photo or file if you want.
+4. Click "Start sending".
+5. Keep the black window open until it says it is finished.
+   When it is done you can download the results.
+
+
+PLEASE READ
+-----------
+- Messages go out from your own WhatsApp number.
+- Send only to people who know you. If many people block or report you,
+  WhatsApp can ban your number.
+- Keep the wait between messages at 8 seconds or more.
+- To unlink your WhatsApp from this PC, click "Log out" on the page.

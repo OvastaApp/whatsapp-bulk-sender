@@ -1,0 +1,12 @@
+# downloaded packages (start.bat installs them)
+node_modules/
+
+# local WhatsApp data and caches
+.wwebjs_auth/
+.wwebjs_cache/
+.wa-sender/
+
+# local tools and build output
+.claude/
+*.zip
+*.log
