@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tap to Send</title>
+<meta name="description" content="Send one WhatsApp message to many numbers, one tap each, from your own WhatsApp. Nothing to install.">
+<style>
+  :root {
+    --bg: #f6f7f8;
+    --card: #ffffff;
+    --text: #17202a;
+    --muted: #5f6b76;
+    --line: #e2e6ea;
+    --green: #128c4a;
+    --green-dark: #0e7a40;
+    --green-soft: #e6f4ec;
+    --red: #c0392b;
+    --red-soft: #fbeaea;
+    --amber-soft: #fdf2e1;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Arabic", sans-serif;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 20px 16px 120px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 18px; font-size: 14px; }
+  h2 { font-size: 16px; margin: 0 0 12px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; }
+  label { display: block; font-weight: 600; margin-bottom: 6px; }
+  .hint { color: var(--muted); font-size: 13px; font-weight: 400; }
+  textarea, input[type=text] {
+    width: 100%; font: inherit; color: inherit; background: #fff;
+    border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
+  }
+  textarea:focus, input:focus { outline: 2px solid var(--green); outline-offset: -1px; border-color: transparent; }
+  textarea { resize: vertical; }
+  #numbers { min-height: 150px; font-family: ui-monospace, Consolas, monospace; font-size: 15px; }
+  #message { min-height: 120px; }
+  .meta { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 6px; font-size: 13px; color: var(--muted); }
+  .over { color: var(--red); font-weight: 600; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .cc { width: 80px !important; }
+  .field { margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
+
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .seg button { border: 0; border-radius: 0; background: #fff; color: var(--text); font-weight: 600; padding: 9px 14px; }
+  .seg button + button { border-left: 1px solid var(--line); }
+  .seg button[aria-pressed="true"] { background: var(--green-soft); color: var(--green); }
+
+  button { font: inherit; font-weight: 600; border-radius: 8px; padding: 10px 16px; border: 1px solid transparent; cursor: pointer; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-ghost { background: #fff; border-color: var(--line); color: var(--text); }
+  .btn-ghost:not(:disabled):hover { background: var(--bg); }
+  .btn-sm { padding: 5px 12px; font-size: 13px; }
+
+  .bar { height: 8px; background: var(--line); border-radius: 999px; overflow: hidden; margin: 4px 0 12px; }
+  .bar > div { height: 100%; width: 0; background: var(--green); transition: width .3s; }
+  .progress-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+
+  .list { border: 1px solid var(--line); border-radius: 10px; max-height: 360px; overflow: auto; }
+  .item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+  .item:last-child { border-bottom: 0; }
+  .item .n { color: var(--muted); font-size: 13px; width: 24px; flex: none; text-align: right; }
+  .item .num { font-family: ui-monospace, Consolas, monospace; font-size: 14px; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  @media (max-width: 420px) {
+    .card { padding: 14px; }
+    .item { gap: 6px; padding: 8px 10px; }
+    .item .num { font-size: 13px; }
+  }
+  .item.bad .num { color: var(--red); }
+  .item.done .num { color: var(--muted); text-decoration: line-through; }
+  .pill { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+  .p-done { background: var(--green-soft); color: var(--green); }
+  .p-bad { background: var(--red-soft); color: var(--red); }
+  .p-next { background: var(--amber-soft); color: #8a5300; }
+  .empty { padding: 18px; text-align: center; color: var(--muted); font-size: 14px; }
+
+  .note { background: var(--amber-soft); color: #6d4300; border-radius: 8px; padding: 10px 12px; font-size: 13px; }
+
+  /* sticky "next" bar */
+  .dock {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: rgba(255,255,255,.96); border-top: 1px solid var(--line);
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  }
+  .dock-in { max-width: 760px; margin: 0 auto; display: flex; gap: 10px; align-items: center; }
+  .next-btn { flex: 1; background: var(--green); color: #fff; padding: 14px 16px; font-size: 16px; border-radius: 10px; text-align: center; }
+  .next-btn:not(:disabled):hover { background: var(--green-dark); }
+  .next-btn small { display: block; font-weight: 400; opacity: .9; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Tap to Send</h1>
+  <p class="sub">Send one WhatsApp message to many numbers from your own WhatsApp. One tap each. Your numbers stay on your device.</p>
+
+  <section class="card">
+    <div class="field">
+      <label for="numbers">Phone numbers <span class="hint">— one per line, or separated by commas. Up to 200.</span></label>
+      <textarea id="numbers" placeholder="01012345678&#10;+201112223334&#10;00971501234567" spellcheck="false" inputmode="tel"></textarea>
+      <div class="meta">
+        <span id="count">0 / 200 numbers</span>
+        <span class="row">
+          <label for="cc" class="hint" style="margin:0">Country code for numbers that start with 0:</label>
+          <input id="cc" type="text" inputmode="numeric" class="cc" value="20">
+        </span>
+      </div>
+    </div>
+    <div class="field">
+      <label for="message">Message</label>
+      <textarea id="message" dir="auto" placeholder="Write your message here…"></textarea>
+      <div class="meta"><span>WhatsApp styles work: *bold*, _italic_, ~strike~</span><span id="chars">0 characters</span></div>
+    </div>
+    <div class="field">
+      <label>Open each chat in</label>
+      <div class="seg" role="group" aria-label="Open each chat in">
+        <button type="button" data-mode="app" aria-pressed="false">WhatsApp app</button>
+        <button type="button" data-mode="web" aria-pressed="false">WhatsApp Web</button>
+      </div>
+      <div class="meta"><span id="modeHint"></span></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="progress-head">
+      <h2>Numbers</h2>
+      <span class="row">
+        <span id="progressText" class="hint"></span>
+        <button type="button" class="btn-ghost btn-sm" id="resetBtn">Start over</button>
+      </span>
+    </div>
+    <div class="bar"><div id="barFill"></div></div>
+    <div class="list" id="list"><div class="empty">Paste numbers above to see them here.</div></div>
+  </section>
+
+  <p class="note">
+    How it works: tap <b>Send to next</b>. WhatsApp opens with your message ready. Tap Send in WhatsApp,
+    then come back here and tap <b>Send to next</b> again. Send only to people who know you.
+  </p>
+</div>
+
+<div class="dock">
+  <div class="dock-in">
+    <button type="button" class="next-btn" id="nextBtn" disabled>Send to next<small id="nextSub">Add numbers and a message</small></button>
+    <button type="button" class="btn-ghost" id="skipBtn" disabled>Skip</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const MAX = 200;
+  const STORE = 'tap-to-send.v1';
+  const isPhone = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+  let done = new Set();     // numbers already opened
+  let skipped = new Set();  // numbers skipped
+  let mode = isPhone ? 'app' : 'web';
+  let items = [];
+
+  // ---- saved state (per device, best effort) ----
+  function load() {
+    try {
+      const s = JSON.parse(localStorage.getItem(STORE) || 'null');
+      if (!s) return;
+      $('numbers').value = s.numbers || '';
+      $('message').value = s.message || '';
+      if (s.cc != null) $('cc').value = s.cc;
+      if (s.mode === 'app' || s.mode === 'web') mode = s.mode;
+      done = new Set(s.done || []);
+      skipped = new Set(s.skipped || []);
+    } catch (e) { /* storage blocked: start fresh */ }
+  }
+  function save() {
+    try {
+      localStorage.setItem(STORE, JSON.stringify({
+        numbers: $('numbers').value, message: $('message').value, cc: $('cc').value,
+        mode, done: [...done], skipped: [...skipped],
+      }));
+    } catch (e) { /* ignore */ }
+  }
+
+  // ---- numbers ----
+  function normalize(raw, cc) {
+    const s = raw.trim();
+    let d = s.replace(/\D/g, '');
+    if (!d) return null;
+    if (s.startsWith('+')) { /* already international */ }
+    else if (d.startsWith('00')) d = d.slice(2);
+    else if (d.startsWith('0') && cc) d = cc + d.slice(1);
+    if (d.length < 8 || d.length > 15) return null;
+    return d;
+  }
+  function parse() {
+    const cc = $('cc').value.replace(/\D/g, '');
+    const pieces = [];
+    for (const part of $('numbers').value.split(/[\r\n,;]+/)) {
+      const p = part.trim();
+      if (!p) continue;
+      const tokens = p.split(/\s+/);
+      if (tokens.length > 1 && tokens.every((t) => t.replace(/\D/g, '').length >= 8)) pieces.push(...tokens);
+      else pieces.push(p);
+    }
+    const seen = new Set();
+    const out = [];
+    let dupes = 0;
+    for (const raw of pieces) {
+      const number = normalize(raw, cc);
+      const key = number || raw;
+      if (seen.has(key)) { dupes++; continue; }
+      seen.add(key);
+      out.push({ raw, number });
+    }
+    return { list: out, dupes };
+  }
+
+  function chatUrl(number) {
+    const text = encodeURIComponent($('message').value.trim());
+    return mode === 'app'
+      ? `whatsapp://send?phone=${number}&text=${text}`
+      : `https://web.whatsapp.com/send?phone=${number}&text=${text}`;
+  }
+
+  function openChat(number) {
+    const url = chatUrl(number);
+    if (mode === 'app') window.location.href = url;          // opens the app, this page stays
+    else window.open(url, 'tap_to_send_whatsapp');            // reuses one WhatsApp Web tab
+    done.add(number);
+    skipped.delete(number);
+    save();
+    render();
+  }
+
+  // ---- UI ----
+  function render() {
+    const { list, dupes } = parse();
+    items = list.slice(0, MAX);
+    const valid = items.filter((x) => x.number);
+    const bad = items.length - valid.length;
+
+    const parts = [`${list.length} / ${MAX} numbers`];
+    if (dupes) parts.push(`${dupes} duplicate${dupes > 1 ? 's' : ''} removed`);
+    if (bad) parts.push(`${bad} invalid`);
+    $('count').textContent = parts.join(' · ');
+    $('count').classList.toggle('over', list.length > MAX);
+    $('chars').textContent = `${$('message').value.trim().length} characters`;
+
+    document.querySelectorAll('.seg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
+    $('modeHint').textContent = mode === 'app'
+      ? 'Opens the WhatsApp app on this phone or PC.'
+      : 'Opens WhatsApp Web in one browser tab. Log in there once with your phone.';
+
+    const opened = valid.filter((x) => done.has(x.number)).length;
+    const next = valid.find((x) => !done.has(x.number) && !skipped.has(x.number));
+    $('barFill').style.width = valid.length ? `${(opened / valid.length) * 100}%` : '0';
+    $('progressText').textContent = valid.length ? `${opened} of ${valid.length} opened` : '';
+
+    const listEl = $('list');
+    listEl.innerHTML = '';
+    if (!items.length) {
+      listEl.innerHTML = '<div class="empty">Paste numbers above to see them here.</div>';
+    }
+    items.forEach((it, i) => {
+      const row = document.createElement('div');
+      row.className = 'item';
+      const n = document.createElement('span'); n.className = 'n'; n.textContent = i + 1;
+      const num = document.createElement('span'); num.className = 'num';
+      num.textContent = it.number ? '+' + it.number : it.raw;
+      row.append(n, num);
+      if (!it.number) {
+        row.classList.add('bad');
+        const p = document.createElement('span'); p.className = 'pill p-bad'; p.textContent = 'Invalid';
+        row.append(p);
+      } else {
+        if (done.has(it.number)) {
+          row.classList.add('done');
+          const p = document.createElement('span'); p.className = 'pill p-done'; p.textContent = 'Opened';
+          row.append(p);
+        } else if (skipped.has(it.number)) {
+          const p = document.createElement('span'); p.className = 'pill'; p.textContent = 'Skipped';
+          p.style.background = 'var(--line)'; p.style.color = 'var(--muted)';
+          row.append(p);
+        } else if (next && next.number === it.number) {
+          const p = document.createElement('span'); p.className = 'pill p-next'; p.textContent = 'Next';
+          row.append(p);
+        }
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'btn-ghost btn-sm';
+        b.textContent = done.has(it.number) ? 'Again' : 'Open';
+        b.disabled = !$('message').value.trim();
+        b.onclick = () => openChat(it.number);
+        row.append(b);
+      }
+      listEl.append(row);
+    });
+
+    const hasMsg = !!$('message').value.trim();
+    const nextBtn = $('nextBtn');
+    nextBtn.disabled = !next || !hasMsg;
+    $('skipBtn').disabled = !next;
+    if (!valid.length) $('nextSub').textContent = 'Add numbers and a message';
+    else if (!hasMsg) $('nextSub').textContent = 'Write a message first';
+    else if (!next) $('nextSub').textContent = skipped.size ? 'All done (some skipped)' : 'All done';
+    else $('nextSub').textContent = `+${next.number} · ${valid.indexOf(next) + 1} of ${valid.length}`;
+  }
+
+  $('nextBtn').onclick = () => {
+    const next = items.find((x) => x.number && !done.has(x.number) && !skipped.has(x.number));
+    if (next) openChat(next.number);
+  };
+  $('skipBtn').onclick = () => {
+    const next = items.find((x) => x.number && !done.has(x.number) && !skipped.has(x.number));
+    if (next) { skipped.add(next.number); save(); render(); }
+  };
+  $('resetBtn').onclick = () => {
+    if (!done.size && !skipped.size) return;
+    if (!confirm('Mark all numbers as not opened and start from the first one?')) return;
+    done.clear(); skipped.clear(); save(); render();
+  };
+  document.querySelectorAll('.seg button').forEach((b) => b.onclick = () => { mode = b.dataset.mode; save(); render(); });
+  ['numbers', 'message', 'cc'].forEach((id) => $(id).addEventListener('input', () => { save(); render(); }));
+
+  load();
+  render();
+})();
+</script>
+</body>
+</html>
