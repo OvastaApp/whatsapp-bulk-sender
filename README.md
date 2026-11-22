@@ -10,13 +10,13 @@ There are two versions. Pick the one that fits you:
 | Install | Nothing. Just open the link | Node.js (`start.bat` helps you install it) |
 | Sending | You tap once per number | Sends by itself, one by one |
 | Photo or file | No, text only | Yes, one image or file with a caption |
-| Link | https://mfarahaaat.github.io/whatsapp-bulk-sender/ | Download this repo |
+| Link | https://ovastaapp.github.io/whatsapp-bulk-sender/ | Download this repo |
 
 ---
 
 ## 1. Tap to Send (web page)
 
-**Open:** https://mfarahaaat.github.io/whatsapp-bulk-sender/
+**Open:** https://ovastaapp.github.io/whatsapp-bulk-sender/
 
 ### How to use it
 1. Open the link on your phone or computer.
