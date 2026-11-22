@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tap to Send</title>
-<meta name="description" content="Send one WhatsApp message to many numbers from your own WhatsApp. On a computer it opens each chat automatically. Nothing to install.">
+<meta name="description" content="Send one WhatsApp message to many numbers from your own WhatsApp. One tap each, or fully automatic on a computer with the free helper extension.">
 <style>
   :root {
     --bg: #f6f7f8;
@@ -20,6 +20,8 @@
     --amber: #b86e00;
     --amber-dark: #9a5c00;
     --amber-soft: #fdf2e1;
+    --blue: #1f5fbf;
+    --blue-soft: #e8f0fc;
     --radius: 12px;
   }
   * { box-sizing: border-box; }
@@ -29,6 +31,7 @@
     color: var(--text);
     font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Arabic", sans-serif;
   }
+  a { color: var(--green); }
   .wrap { max-width: 760px; margin: 0 auto; padding: 20px 16px 130px; }
   h1 { font-size: 22px; margin: 0 0 4px; }
   .sub { color: var(--muted); margin: 0 0 18px; font-size: 14px; }
@@ -56,8 +59,11 @@
   .seg button + button { border-left: 1px solid var(--line); }
   .seg button[aria-pressed="true"] { background: var(--green-soft); color: var(--green); }
 
-  .auto-box { margin-top: 14px; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: #fafbfc; }
-  .auto-box label { margin-bottom: 8px; }
+  .box { margin-top: 14px; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: #fafbfc; }
+  .box label { margin-bottom: 8px; }
+  .box p { margin: 0 0 6px; font-size: 14px; }
+  .box p:last-child { margin-bottom: 0; }
+  .ok-badge { display: inline-block; font-size: 12px; font-weight: 600; color: var(--green); background: var(--green-soft); border-radius: 999px; padding: 2px 8px; margin-left: 6px; vertical-align: 1px; }
   .auto-msg { margin-top: 10px; background: var(--amber-soft); color: #6d4300; border-radius: 8px; padding: 8px 10px; font-size: 13px; }
 
   button { font: inherit; font-weight: 600; border-radius: 8px; padding: 10px 16px; border: 1px solid transparent; cursor: pointer; }
@@ -85,8 +91,9 @@
   .pill { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
   .p-done { background: var(--green-soft); color: var(--green); }
   .p-bad { background: var(--red-soft); color: var(--red); }
-  .p-next { background: var(--amber-soft); color: #8a5300; }
+  .p-next, .p-nowa { background: var(--amber-soft); color: #8a5300; }
   .p-skip { background: var(--line); color: var(--muted); }
+  .p-sending { background: var(--blue-soft); color: var(--blue); }
   .empty { padding: 18px; text-align: center; color: var(--muted); font-size: 14px; }
 
   .note { background: var(--amber-soft); color: #6d4300; border-radius: 8px; padding: 10px 12px; font-size: 13px; }
@@ -136,16 +143,24 @@
       </div>
       <div class="meta"><span id="modeHint"></span></div>
 
-      <div class="auto-box" id="autoBox">
-        <label>Automatic: open the next chat every</label>
+      <!-- shown on computers when the helper extension is installed -->
+      <div class="box hidden" id="autoBox">
+        <label>Automatic sending <span class="ok-badge" id="helperBadge">Helper installed</span></label>
         <div class="row">
+          <span>Wait between messages:</span>
           <input id="minWait" type="number" min="5" max="120" value="10" class="sec" aria-label="Shortest wait in seconds">
           <span>to</span>
           <input id="maxWait" type="number" min="5" max="180" value="20" class="sec" aria-label="Longest wait in seconds">
           <span>seconds (random)</span>
         </div>
-        <div class="meta"><span>Press <b>Enter</b> in the WhatsApp tab to send each message. Allow pop-ups if your browser asks.</span></div>
+        <div class="meta"><span>Keep this tab and the WhatsApp tab open while it sends.</span></div>
         <div class="auto-msg hidden" id="autoMsg"></div>
+      </div>
+
+      <!-- shown on computers without the helper -->
+      <div class="box hidden" id="promoBox">
+        <p><b>Want it fully automatic?</b> Install the free helper extension once (Chrome or Edge). Then this page sends to every number by itself, with no clicks.</p>
+        <p><a href="https://github.com/OvastaApp/whatsapp-bulk-sender#make-it-fully-automatic-helper-extension" target="_blank" rel="noopener">How to install the helper (2 minutes)</a></p>
       </div>
     </div>
   </section>
@@ -155,6 +170,7 @@
       <h2>Numbers</h2>
       <span class="row">
         <span id="progressText" class="hint"></span>
+        <button type="button" class="btn-ghost btn-sm hidden" id="csvBtn">Download results</button>
         <button type="button" class="btn-ghost btn-sm" id="resetBtn">Start over</button>
       </span>
     </div>
@@ -165,13 +181,13 @@
   <p class="note" id="howNote"></p>
   <p class="hint" style="text-align:center;margin-top:18px">
     Free and open source ·
-    <a href="https://github.com/OvastaApp/whatsapp-bulk-sender" style="color:var(--green)">How to use &amp; source on GitHub</a>
+    <a href="https://github.com/OvastaApp/whatsapp-bulk-sender">How to use &amp; source on GitHub</a>
   </p>
 </div>
 
 <div class="dock">
   <div class="dock-in">
-    <button type="button" class="main-btn" id="autoBtn" disabled><span id="autoLabel">Start automatic</span><small id="autoSub"></small></button>
+    <button type="button" class="main-btn hidden" id="autoBtn" disabled><span id="autoLabel">Start automatic</span><small id="autoSub"></small></button>
     <button type="button" class="main-btn" id="nextBtn" disabled><span id="nextLabel">Send to next</span><small id="nextSub">Add numbers and a message</small></button>
     <button type="button" class="btn-ghost" id="skipBtn" disabled>Skip</button>
   </div>
@@ -183,32 +199,21 @@
   const MAX = 200;
   const STORE = 'tap-to-send.v1';
   const WA_TAB = 'tap_to_send_whatsapp';
-  // Off: WhatsApp Web sends Cross-Origin-Opener-Policy, which cuts this page's link to the WhatsApp tab
-  // as soon as it loads, so a page can't open the next chat on a timer. Needs a helper browser extension.
-  const AUTO_SUPPORTED = false;
+  const POST_TO = location.origin === 'null' ? '*' : location.origin;
   const isPhone = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  const FINAL = new Set(['sent', 'not_on_whatsapp', 'failed']);
+  const LABEL = { sent: 'Sent', not_on_whatsapp: 'Not on WhatsApp', failed: 'Failed', sending: 'Sending…' };
+  const PILL = { sent: 'p-done', not_on_whatsapp: 'p-nowa', failed: 'p-bad', sending: 'p-sending' };
 
-  let done = new Set();     // numbers already opened
-  let skipped = new Set();  // numbers skipped
+  let done = new Set();     // opened by hand
+  let skipped = new Set();  // skipped by hand
+  let results = {};         // number -> { status, note } from the helper extension
   let mode = isPhone ? 'app' : 'web';
   let items = [];
 
-  // Automatic mode (computer + WhatsApp Web): opens the next chat in the same tab on a timer.
-  const auto = { on: false, win: null, nextAt: 0, msg: '' };
-
-  // The timer runs in a Web Worker: browsers slow down timers in background tabs a lot, workers much less.
-  let ticker = null;
-  let fallbackTimer = null;
-  try {
-    const src = 'var t=null;onmessage=function(e){clearTimeout(t);if(e.data>0)t=setTimeout(function(){postMessage(1)},e.data)}';
-    ticker = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
-    ticker.onmessage = () => autoTick();
-  } catch (e) { ticker = null; }
-  function schedule(ms) {
-    if (ticker) { ticker.postMessage(ms); return; }
-    clearTimeout(fallbackTimer);
-    if (ms > 0) fallbackTimer = setTimeout(autoTick, ms);
-  }
+  // The helper extension (computer only) sends for us. It marks the page when it's installed.
+  const helper = { version: document.documentElement.getAttribute('data-wa-helper') || '' };
+  const auto = { on: false, nextAt: 0, current: null, msg: '' };
 
   // ---- saved state (per device, best effort) ----
   function load() {
@@ -223,14 +228,17 @@
       if (s.maxWait) $('maxWait').value = s.maxWait;
       done = new Set(s.done || []);
       skipped = new Set(s.skipped || []);
+      results = s.results || {};
     } catch (e) { /* storage blocked: start fresh */ }
   }
   function save() {
+    const finalOnly = {};
+    for (const [n, r] of Object.entries(results)) if (FINAL.has(r.status)) finalOnly[n] = r;
     try {
       localStorage.setItem(STORE, JSON.stringify({
         numbers: $('numbers').value, message: $('message').value, cc: $('cc').value,
         mode, minWait: $('minWait').value, maxWait: $('maxWait').value,
-        done: [...done], skipped: [...skipped],
+        done: [...done], skipped: [...skipped], results: finalOnly,
       }));
     } catch (e) { /* ignore */ }
   }
@@ -270,7 +278,11 @@
   }
 
   const hasMessage = () => !!$('message').value.trim();
-  const nextItem = () => items.find((x) => x.number && !done.has(x.number) && !skipped.has(x.number));
+  const finished = (n) => done.has(n) || (results[n] && FINAL.has(results[n].status));
+  const inFlight = () => Object.keys(results).find((n) => results[n].status === 'sending');
+  const remaining = () => items.filter((x) => x.number && !finished(x.number) && !skipped.has(x.number) && !(results[x.number] && results[x.number].status === 'sending'));
+  const nextItem = () => remaining()[0];
+  const autoAvailable = () => mode === 'web' && !isPhone && !!helper.version;
 
   function waits() {
     const min = Math.min(120, Math.max(5, Number($('minWait').value) || 10));
@@ -285,78 +297,96 @@
       : `https://web.whatsapp.com/send?phone=${number}&text=${text}`;
   }
 
-  function markOpened(number) {
+  // ---- one chat per tap ----
+  function openChat(number) {
+    const url = chatUrl(number);
+    if (mode === 'app') window.location.href = url;   // opens the app, this page stays
+    else window.open(url, WA_TAB);
     done.add(number);
     skipped.delete(number);
     save();
+    render();
   }
 
-  // ---- manual: one chat per tap ----
-  function openChat(number) {
-    const url = chatUrl(number);
-    if (mode === 'app') {
-      window.location.href = url;                 // opens the app, this page stays
-    } else {
-      const w = window.open(url, WA_TAB);          // reuses one WhatsApp Web tab
-      if (w) auto.win = w;
-    }
-    markOpened(number);
-    if (auto.on) scheduleNext(); else render();
-  }
+  // ---- automatic, through the helper extension ----
+  const toHelper = (msg) => window.postMessage({ source: 'tap-to-send', ...msg }, POST_TO);
 
-  // ---- automatic: computer + WhatsApp Web ----
   function startAuto() {
-    const next = nextItem();
-    if (!next || !hasMessage()) return;
-    const w = window.open(chatUrl(next.number), WA_TAB);
-    if (!w) {
-      auto.msg = 'Your browser blocked the WhatsApp tab. Allow pop-ups for this page, then click the green button again.';
-      render();
-      return;
-    }
-    auto.win = w;
+    const numbers = remaining().map((x) => x.number);
+    if (!numbers.length || !hasMessage()) return;
+    const { min, max } = waits();
     auto.on = true;
     auto.msg = '';
-    markOpened(next.number);
-    scheduleNext();
-  }
-
-  function scheduleNext() {
-    if (!nextItem()) {
-      stopAuto('All chats are open. Press Enter in WhatsApp to send the last message.');
-      return;
-    }
-    const { min, max } = waits();
-    const ms = Math.round((min + Math.random() * (max - min)) * 1000);
-    auto.nextAt = Date.now() + ms;
-    schedule(ms);
-    render();
-  }
-
-  function autoTick() {
-    if (!auto.on) return;
-    if (!auto.win || auto.win.closed) {
-      stopAuto('The WhatsApp tab was closed. Click Continue automatic to go on.');
-      return;
-    }
-    const next = nextItem();
-    if (!next) { stopAuto('All chats are open.'); return; }
-    try {
-      auto.win.location.href = chatUrl(next.number);
-    } catch (e) {
-      stopAuto('Could not open the next chat. Click Continue automatic to go on.');
-      return;
-    }
-    markOpened(next.number);
-    scheduleNext();
-  }
-
-  function stopAuto(msg) {
-    auto.on = false;
     auto.nextAt = 0;
-    auto.msg = msg || '';
-    schedule(0);
+    auto.current = null;
+    toHelper({ type: 'start', numbers, text: $('message').value.trim(), minWait: min, maxWait: max });
     render();
+  }
+
+  function pauseAuto() {
+    toHelper({ type: 'stop' });
+    auto.on = false;
+    auto.msg = 'Paused. Click Continue automatic to go on.';
+    render();
+  }
+
+  window.addEventListener('message', (e) => {
+    if (e.source !== window || !e.data || e.data.source !== 'wa-helper') return;
+    const m = e.data;
+    switch (m.type) {
+      case 'hello':
+        helper.version = m.version || helper.version || '1';
+        break;
+      case 'reply':
+        if (m.for === 'start' && m.ok === false) { auto.on = false; auto.msg = m.error || 'Could not start.'; }
+        break;
+      case 'progress':
+        if (m.status === 'pending') delete results[m.number];
+        else { results[m.number] = { status: m.status }; auto.current = m.number; auto.nextAt = 0; }
+        break;
+      case 'result':
+        results[m.number] = { status: m.status, note: m.note || '' };
+        auto.current = null;
+        save();
+        break;
+      case 'waiting':
+        auto.nextAt = m.nextAt;
+        break;
+      case 'login-needed':
+        auto.on = false;
+        auto.msg = 'Log in to WhatsApp Web first: in the WhatsApp tab, scan the QR code with your phone (Linked devices > Link a device). Then click Continue automatic.';
+        break;
+      case 'done':
+        auto.on = false;
+        auto.msg = 'All done.';
+        break;
+      case 'stopped':
+        auto.on = false;
+        auto.msg = m.reason || 'Paused.';
+        break;
+      case 'error':
+        auto.on = false;
+        auto.msg = 'The helper had a problem: ' + (m.message || 'unknown') + '. Reload this page and try again.';
+        break;
+      default:
+        return;
+    }
+    render();
+  });
+
+  function downloadCsv() {
+    const esc = (v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+    const rows = [['#', 'Number', 'Status', 'Note'].map(esc).join(',')];
+    items.forEach((it, i) => {
+      const r = it.number && results[it.number];
+      const status = !it.number ? 'Invalid' : r ? (LABEL[r.status] || r.status) : done.has(it.number) ? 'Opened' : skipped.has(it.number) ? 'Skipped' : 'Not sent';
+      rows.push([i + 1, it.number ? '+' + it.number : it.raw, status, r ? r.note : ''].map(esc).join(','));
+    });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['﻿' + rows.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+    a.download = 'whatsapp-results.csv';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   }
 
   // ---- UI ----
@@ -366,7 +396,7 @@
     const valid = items.filter((x) => x.number);
     const bad = items.length - valid.length;
     const web = mode === 'web';
-    const autoMode = web && AUTO_SUPPORTED;
+    const autoMode = autoAvailable();
 
     const parts = [`${list.length} / ${MAX} numbers`];
     if (dupes) parts.push(`${dupes} duplicate${dupes > 1 ? 's' : ''} removed`);
@@ -379,29 +409,44 @@
       b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
       b.disabled = auto.on;
     });
-    $('modeHint').textContent = web
-      ? (isPhone ? 'Opens WhatsApp Web. On a phone, "WhatsApp app" works better.'
-                 : 'Opens each chat in a WhatsApp Web tab. Log in there once with your phone. Have the WhatsApp desktop app? Choose "WhatsApp app" instead.')
-      : 'Opens the WhatsApp app on this phone or PC.';
+    $('modeHint').textContent = !web
+      ? 'Opens the WhatsApp app on this phone or PC.'
+      : isPhone
+        ? 'Opens WhatsApp Web. On a phone, "WhatsApp app" works better.'
+        : autoMode
+          ? 'Sends through WhatsApp Web. Log in there once with your phone.'
+          : 'Opens each chat in a WhatsApp Web tab. Log in there once with your phone. Have the WhatsApp desktop app? Choose "WhatsApp app" instead.';
     $('autoBox').classList.toggle('hidden', !autoMode);
+    $('promoBox').classList.toggle('hidden', !(web && !isPhone && !helper.version));
+    $('helperBadge').textContent = 'Helper installed' + (helper.version ? ` (v${helper.version})` : '');
     $('autoMsg').textContent = auto.msg;
     $('autoMsg').classList.toggle('hidden', !auto.msg);
+    ['minWait', 'maxWait'].forEach((id) => { $(id).disabled = auto.on; });
 
+    const { min, max } = waits();
     $('howNote').innerHTML = autoMode
-      ? 'How it works: click <b>Start automatic</b>. A WhatsApp Web tab opens with your message ready. ' +
-        'Press <b>Enter</b> there to send. Every few seconds the next chat opens in the same tab, so keep pressing Enter. ' +
-        'Click <b>Pause</b> any time. Send only to people who know you.'
+      ? `How it works: click <b>Start automatic</b>. The helper opens WhatsApp Web and sends your message to each number by itself, ` +
+        `waiting ${min}–${max} seconds between messages. Click <b>Pause</b> any time. Send only to people who know you.`
       : web
-      ? 'How it works: click <b>Send to next</b>. A WhatsApp Web tab opens with your message ready. Press <b>Enter</b> to send, ' +
-        'close that tab, then come back here and click <b>Send to next</b> again. Send only to people who know you.'
-      : 'How it works: tap <b>Send to next</b>. WhatsApp opens with your message ready. Tap Send in WhatsApp, ' +
-        'then come back here and tap <b>Send to next</b> again. Send only to people who know you.';
+        ? 'How it works: click <b>Send to next</b>. A WhatsApp Web tab opens with your message ready. Press <b>Enter</b> to send, ' +
+          'close that tab, then come back here and click <b>Send to next</b> again. Send only to people who know you.'
+        : 'How it works: tap <b>Send to next</b>. WhatsApp opens with your message ready. Tap Send in WhatsApp, ' +
+          'then come back here and tap <b>Send to next</b> again. Send only to people who know you.';
 
-    const opened = valid.filter((x) => done.has(x.number)).length;
+    // progress
+    const finishedCount = valid.filter((x) => finished(x.number)).length;
+    const counts = { sent: 0, not_on_whatsapp: 0, failed: 0 };
+    for (const x of valid) { const r = results[x.number]; if (r && counts[r.status] != null) counts[r.status]++; }
     const next = nextItem();
-    $('barFill').style.width = valid.length ? `${(opened / valid.length) * 100}%` : '0';
-    $('progressText').textContent = valid.length ? `${opened} of ${valid.length} opened` : '';
+    $('barFill').style.width = valid.length ? `${(finishedCount / valid.length) * 100}%` : '0';
+    const extra = [];
+    if (counts.sent) extra.push(`${counts.sent} sent`);
+    if (counts.not_on_whatsapp) extra.push(`${counts.not_on_whatsapp} not on WhatsApp`);
+    if (counts.failed) extra.push(`${counts.failed} failed`);
+    $('progressText').textContent = valid.length ? `${finishedCount} of ${valid.length} done` + (extra.length ? ` · ${extra.join(' · ')}` : '') : '';
+    $('csvBtn').classList.toggle('hidden', !Object.keys(results).length && !done.size);
 
+    // list
     const listEl = $('list');
     listEl.innerHTML = '';
     if (!items.length) listEl.innerHTML = '<div class="empty">Paste numbers above to see them here.</div>';
@@ -412,23 +457,34 @@
       const num = document.createElement('span'); num.className = 'num';
       num.textContent = it.number ? '+' + it.number : it.raw;
       row.append(n, num);
-      const pill = (cls, text) => { const p = document.createElement('span'); p.className = 'pill ' + cls; p.textContent = text; row.append(p); };
+      const pill = (cls, text, title) => {
+        const p = document.createElement('span');
+        p.className = 'pill ' + cls; p.textContent = text;
+        if (title) p.title = title;
+        row.append(p);
+      };
       if (!it.number) {
         row.classList.add('bad');
         pill('p-bad', 'Invalid');
       } else {
-        if (done.has(it.number)) { row.classList.add('done'); pill('p-done', 'Opened'); }
+        const r = results[it.number];
+        if (r) {
+          if (FINAL.has(r.status)) row.classList.add('done');
+          pill(PILL[r.status] || 'p-skip', LABEL[r.status] || r.status, r.note);
+        } else if (done.has(it.number)) { row.classList.add('done'); pill('p-done', 'Opened'); }
         else if (skipped.has(it.number)) pill('p-skip', 'Skipped');
-        else if (next && next.number === it.number) pill('p-next', 'Next');
+        else if (next && next.number === it.number && !auto.on) pill('p-next', 'Next');
         const b = document.createElement('button');
         b.type = 'button'; b.className = 'btn-ghost btn-sm';
-        b.textContent = done.has(it.number) ? 'Again' : 'Open';
-        b.disabled = !hasMessage();
+        b.textContent = finished(it.number) ? 'Again' : 'Open';
+        b.disabled = !hasMessage() || auto.on;
         b.onclick = () => openChat(it.number);
         row.append(b);
       }
       listEl.append(row);
     });
+    const active = listEl.querySelector('.p-sending');
+    if (active) active.closest('.item').scrollIntoView({ block: 'nearest' });
 
     // bottom bar
     const ready = !!next && hasMessage();
@@ -443,12 +499,11 @@
     autoBtn.classList.toggle('hidden', !autoMode);
     if (autoMode) {
       autoBtn.classList.toggle('pause', auto.on);
-      $('autoLabel').textContent = auto.on ? 'Pause' : !next && valid.length ? 'All done' : (opened ? 'Continue automatic' : 'Start automatic');
-      autoBtn.disabled = !auto.on && !ready;
-      if (!auto.on) {
-        const { min, max } = waits();
-        $('autoSub').textContent = ready ? `A new chat every ${min}–${max} s · you press Enter` : status;
-      }
+      $('autoLabel').textContent = auto.on ? 'Pause' : !next && valid.length ? 'All done' : (finishedCount ? 'Continue automatic' : 'Start automatic');
+      const finishing = !auto.on && inFlight();
+      autoBtn.disabled = !auto.on && (!ready || !!finishing);
+      if (finishing) $('autoSub').textContent = 'Finishing the current message…';
+      else if (!auto.on) $('autoSub').textContent = ready ? `Sends to ${remaining().length} number${remaining().length > 1 ? 's' : ''} by itself, every ${min}–${max} s` : status;
       nextBtn.className = 'btn-ghost';
       $('nextLabel').textContent = 'Open next';
       $('nextSub').classList.add('hidden');
@@ -458,34 +513,38 @@
       $('nextSub').classList.remove('hidden');
       $('nextSub').textContent = status;
     }
-    nextBtn.disabled = !ready;
-    $('skipBtn').disabled = !next;
+    nextBtn.disabled = !ready || auto.on;
+    $('skipBtn').disabled = !next || auto.on;
     updateCountdown();
   }
 
   function updateCountdown() {
-    if (!auto.on || mode !== 'web' || !AUTO_SUPPORTED) return;
-    const sec = Math.max(0, Math.ceil((auto.nextAt - Date.now()) / 1000));
-    const valid = items.filter((x) => x.number);
-    const opened = valid.filter((x) => done.has(x.number)).length;
-    $('autoSub').textContent = `Next chat in ${sec}s · ${opened} of ${valid.length} opened`;
+    if (!auto.on || !autoAvailable()) return;
+    let text;
+    if (auto.current) text = `Sending to +${auto.current}…`;
+    else if (auto.nextAt) text = `Next message in ${Math.max(0, Math.ceil((auto.nextAt - Date.now()) / 1000))}s`;
+    else text = 'Starting…';
+    $('autoSub').textContent = `${text} · ${remaining().length} left`;
   }
   setInterval(updateCountdown, 500);
 
-  $('autoBtn').onclick = () => { if (auto.on) stopAuto('Paused. Click Continue automatic to go on.'); else startAuto(); };
+  $('autoBtn').onclick = () => (auto.on ? pauseAuto() : startAuto());
   $('nextBtn').onclick = () => { const next = nextItem(); if (next) openChat(next.number); };
   $('skipBtn').onclick = () => {
     const next = nextItem();
     if (!next) return;
     skipped.add(next.number);
     save();
-    if (auto.on && !nextItem()) stopAuto('All chats are open.'); else render();
+    render();
   };
+  $('csvBtn').onclick = downloadCsv;
   $('resetBtn').onclick = () => {
-    if (!done.size && !skipped.size) return;
-    if (!confirm('Mark all numbers as not opened and start from the first one?')) return;
-    if (auto.on) stopAuto('');
-    done.clear(); skipped.clear(); save(); render();
+    if (!done.size && !skipped.size && !Object.keys(results).length) return;
+    if (!confirm('Clear all results and start again from the first number?')) return;
+    if (auto.on) pauseAuto();
+    done.clear(); skipped.clear(); results = {};
+    auto.msg = '';
+    save(); render();
   };
   document.querySelectorAll('.seg button').forEach((b) => b.onclick = () => { mode = b.dataset.mode; auto.msg = ''; save(); render(); });
   ['numbers', 'message', 'cc', 'minWait', 'maxWait'].forEach((id) => $(id).addEventListener('input', () => { save(); render(); }));

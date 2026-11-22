@@ -7,19 +7,20 @@ Send one WhatsApp message to many numbers (up to 200). Each message is sent to e
 ## Quick start
 
 - **On a phone or computer, nothing to install:** open the link above, paste the numbers, write the message, and tap **Send to next** for each number.
+- **Fully automatic from the link, on a computer:** install the free [helper extension](#make-it-fully-automatic-helper-extension) once in Chrome or Edge. Then click **Start automatic** and it sends to every number by itself.
 - **Fully automatic on a Windows PC, with photos or files:** click **Code → Download ZIP**, unzip it, and double-click `start.bat`.
 
 ## Which version?
 
-There are two versions. Pick the one that fits you:
+Pick the one that fits you:
 
-| | **Tap to Send** (web page) | **Automatic Sender** (Windows app) |
-|---|---|---|
-| Where | Any phone or computer, in the browser | A Windows 10 or 11 PC |
-| Install | Nothing. Just open the link | Node.js (`start.bat` helps you install it) |
-| Sending | One tap per number, then you press Send in WhatsApp | Sends by itself, one by one, every 10–20 s |
-| Photo or file | No, text only | Yes, one image or file with a caption |
-| Link | https://ovastaapp.github.io/whatsapp-bulk-sender/ | Download this repo |
+| | **Tap to Send** (web page) | **Tap to Send + helper** (computer) | **Automatic Sender** (Windows app) |
+|---|---|---|---|
+| Where | Any phone or computer | Chrome or Edge on a computer | A Windows 10 or 11 PC |
+| Install | Nothing | The helper extension, once | Node.js (`start.bat` helps you) |
+| Sending | One tap per number, you press Send | **By itself**, every 10–20 s | **By itself**, every 10–20 s |
+| Photo or file | No, text only | No, text only | Yes, one image or file |
+| Start | Open the link | Open the link | Download this repo |
 
 ---
 
@@ -45,7 +46,36 @@ There are two versions. Pick the one that fits you:
 3. Press **Enter** to send. With WhatsApp Web, close that tab after sending.
 4. Come back to the page and click **Send to next** again. Repeat until it says **All done**.
 
-> A website can't open chats on a timer or press Send inside WhatsApp, because browsers don't let one site control another. For sending with no clicks at all, use the Automatic Sender below.
+> A website on its own can't open chats on a timer or press Send inside WhatsApp, because browsers don't let one site control another. For sending with no clicks, install the helper extension below.
+
+### Make it fully automatic (helper extension)
+
+The helper is a small, free browser extension for **Chrome or Edge on a computer**. With it, the Tap to Send page sends your message to every number **by itself**, through WhatsApp Web, waiting 10–20 seconds between messages. It shows **Sent**, **Not on WhatsApp** or **Failed** for each number.
+
+**Install it (one time, about 2 minutes):**
+1. On this page, click the green **Code** button, then **Download ZIP**.
+2. Right-click the zip and choose **Extract All**. Remember where the folder is.
+3. Open the extensions page:
+   - **Chrome:** type `chrome://extensions` in the address bar and press Enter.
+   - **Edge:** type `edge://extensions` in the address bar and press Enter.
+4. Turn on **Developer mode** (top right in Chrome, left side in Edge).
+5. Click **Load unpacked** and choose the **`extension`** folder inside the unzipped folder.
+6. You should see **WhatsApp Bulk Sender Helper** in the list. Keep that folder; don't delete it.
+
+**Use it:**
+1. Open https://web.whatsapp.com once and log in with your phone (Linked devices → Link a device).
+2. Open the [Tap to Send page](https://ovastaapp.github.io/whatsapp-bulk-sender/). Under **Open each chat in**, choose **WhatsApp Web**. You'll see **Automatic sending · Helper installed**. If the page was already open, reload it.
+3. Paste the numbers and write the message. Set the wait between messages (default 10–20 seconds).
+4. Click **Start automatic**. The helper uses your WhatsApp Web tab, or opens one, and sends to each number by itself.
+5. Watch the list: **Sending…**, then **Sent**, **Not on WhatsApp** or **Failed**.
+6. Click **Pause** any time and **Continue automatic** to go on. A message that is already going out finishes first, so nobody gets it twice.
+7. When it says **All done**, click **Download results** to save the list as a CSV file.
+
+**Good to know:**
+- Keep both tabs open while it sends: the Tap to Send page and WhatsApp Web. Closing either one pauses it.
+- If WhatsApp Web isn't logged in, the page asks you to scan the QR code, then click **Continue automatic**.
+- WhatsApp sometimes changes WhatsApp Web. If messages start showing **Failed** with "Could not press Send", the helper needs an update.
+- The helper only works with this page and WhatsApp Web. It doesn't read your chats or send anything anywhere else.
 
 ### On a phone: one tap per number
 1. Under **Open each chat in**, choose **WhatsApp app** (it's already chosen on phones).
@@ -56,7 +86,8 @@ There are two versions. Pick the one that fits you:
 ### Extra buttons
 - **Skip**: jump over the next number without opening it.
 - **Open** / **Again**: open a chat for one number on the list.
-- **Start over**: mark every number as not opened and begin again.
+- **Download results**: save the list with each number's status as a CSV file (opens in Excel).
+- **Start over**: clear all results and begin again from the first number.
 
 The page remembers your numbers, message and progress on your device, so you can close it and continue later. Nothing is sent to any server. Your list stays in your browser.
 
@@ -119,7 +150,8 @@ Click **Log out** on the page. This unlinks your WhatsApp from this PC.
 - Messages go out from **your own** WhatsApp number.
 - **Send only to people who know you** and expect your message. If many people block or report you, WhatsApp can ban your number.
 - The Automatic Sender controls WhatsApp Web. It is **not an official WhatsApp tool**, so use long waits and small lists.
-- Tap to Send only opens normal WhatsApp chats, so you press Send yourself every time.
+- Tap to Send on its own only opens normal WhatsApp chats, so you press Send yourself every time.
+- The helper extension and the Automatic Sender send by themselves. That is automatic sending, so the same ban risk applies: keep the waits long, the lists small, and send only to people who know you.
 
 ---
 
@@ -129,6 +161,10 @@ Click **Log out** on the page. This unlinks your WhatsApp from this PC.
 ```
 docs/index.html       Tap to Send page (served by GitHub Pages from /docs)
 docs/images/          Screenshots used in this README (made-up numbers)
+extension/            Helper extension (Chrome/Edge, Manifest V3)
+  background.js         runs the send queue: one WhatsApp Web tab, random wait between messages
+  page-bridge.js        connects the Tap to Send page with the extension
+  whatsapp.js           on web.whatsapp.com: presses Send, reports Sent / Not on WhatsApp / Failed
 server.js             Automatic Sender: web server + WhatsApp connection
 public/index.html     Automatic Sender: the page you use at localhost:3000
 start.bat             Windows launcher (checks Node.js, installs, starts)
