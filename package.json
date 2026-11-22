@@ -1,8 +1,13 @@
 {
-  "name": "whatsapp-sender",
+  "name": "whatsapp-bulk-sender",
   "version": "1.0.0",
   "private": true,
   "description": "Send one WhatsApp message (and an optional file) to up to 200 numbers, one by one, from your own WhatsApp.",
+  "homepage": "https://ovastaapp.github.io/whatsapp-bulk-sender/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OvastaApp/whatsapp-bulk-sender.git"
+  },
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

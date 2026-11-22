@@ -177,7 +177,7 @@
     <div class="field">
       <label>Wait between messages</label>
       <div class="row">
-        <input id="minDelay" type="number" min="3" max="600" value="8" class="small-input">
+        <input id="minDelay" type="number" min="3" max="600" value="10" class="small-input">
         <span>to</span>
         <input id="maxDelay" type="number" min="3" max="900" value="20" class="small-input">
         <span>seconds (random)</span>
@@ -279,7 +279,7 @@ function fmtDuration(sec) {
 function fmtNumber(n) { return n ? '+' + n : ''; }
 
 function delays() {
-  let min = Math.max(3, Number($('minDelay').value) || 8);
+  let min = Math.max(3, Number($('minDelay').value) || 10);
   let max = Math.max(min, Number($('maxDelay').value) || 20);
   return { min, max };
 }

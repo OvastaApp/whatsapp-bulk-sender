@@ -2,6 +2,15 @@
 
 Send one WhatsApp message to many numbers (up to 200). Each message is sent to each person separately, from **your own** WhatsApp.
 
+**▶ Try it now:** https://ovastaapp.github.io/whatsapp-bulk-sender/
+
+## Quick start
+
+- **On a phone, or with nothing to install:** open the link above, paste the numbers, write the message, and tap **Send to next** for each number.
+- **Fully automatic on a Windows PC, with photos or files:** click **Code → Download ZIP**, unzip it, and double-click `start.bat`.
+
+## Which version?
+
 There are two versions. Pick the one that fits you:
 
 | | **Tap to Send** (web page) | **Automatic Sender** (Windows app) |
@@ -17,6 +26,8 @@ There are two versions. Pick the one that fits you:
 ## 1. Tap to Send (web page)
 
 **Open:** https://ovastaapp.github.io/whatsapp-bulk-sender/
+
+<p align="center"><img src="docs/images/tap-to-send-list.png" alt="Tap to Send on a phone: list of numbers with opened ones crossed out, and a big Send to next button" width="320"></p>
 
 ### How to use it
 1. Open the link on your phone or computer.
@@ -45,6 +56,8 @@ The page remembers your numbers, message and progress on your device, so you can
 
 It sends to every number by itself, waiting a few seconds between messages. You can attach one photo or file.
 
+<p align="center"><img src="docs/images/automatic-sender.png" alt="Automatic Sender: connected WhatsApp, numbers and message, and live sending progress with Sent, Not on WhatsApp and Waiting statuses" width="640"></p>
+
 ### Install (first time)
 1. On this page, click the green **Code** button, then **Download ZIP**.
 2. **Unzip it first:** right-click the zip and choose **Extract All**. Don't run it from inside the zip.
@@ -69,7 +82,7 @@ Next time you start the app, you won't need to scan again.
 2. **Phone numbers:** paste up to 200, one per line or separated by commas. The same number rules as Tap to Send apply.
 3. **Message:** write your message.
 4. **Image or file** (optional): click **Choose file**, up to 30 MB. Your message becomes its caption.
-5. **Wait between messages:** the default is a random 8–20 seconds. Longer waits are safer.
+5. **Wait between messages:** the default is a random 10–20 seconds. Longer waits are safer.
 6. Click **Start sending** and confirm.
 7. Watch each number's status:
    - **Sent**: the message went out.
@@ -105,6 +118,7 @@ Click **Log out** on the page. This unlinks your WhatsApp from this PC.
 ### Project files
 ```
 docs/index.html       Tap to Send page (served by GitHub Pages from /docs)
+docs/images/          Screenshots used in this README (made-up numbers)
 server.js             Automatic Sender: web server + WhatsApp connection
 public/index.html     Automatic Sender: the page you use at localhost:3000
 start.bat             Windows launcher (checks Node.js, installs, starts)

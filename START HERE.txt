@@ -43,5 +43,5 @@ PLEASE READ
 - Messages go out from your own WhatsApp number.
 - Send only to people who know you. If many people block or report you,
   WhatsApp can ban your number.
-- Keep the wait between messages at 8 seconds or more.
+- Keep the wait between messages at 10 seconds or more.
 - To unlink your WhatsApp from this PC, click "Log out" on the page.

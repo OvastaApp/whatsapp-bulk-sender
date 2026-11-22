@@ -399,7 +399,7 @@ app.post('/api/send', (req, res) => {
 
     const message = String(req.body.message || '').trim();
     const countryCode = String(req.body.countryCode || '').replace(/\D/g, '');
-    const minDelay = clamp(Number(req.body.minDelay) || 8, 3, 600);
+    const minDelay = clamp(Number(req.body.minDelay) || 10, 3, 600);
     const maxDelay = clamp(Number(req.body.maxDelay) || 20, minDelay, 900);
     const { items, duplicates } = parseNumbers(req.body.numbers, countryCode);
 
