@@ -183,6 +183,9 @@
   const MAX = 200;
   const STORE = 'tap-to-send.v1';
   const WA_TAB = 'tap_to_send_whatsapp';
+  // Off: WhatsApp Web sends Cross-Origin-Opener-Policy, which cuts this page's link to the WhatsApp tab
+  // as soon as it loads, so a page can't open the next chat on a timer. Needs a helper browser extension.
+  const AUTO_SUPPORTED = false;
   const isPhone = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 
   let done = new Set();     // numbers already opened
@@ -363,6 +366,7 @@
     const valid = items.filter((x) => x.number);
     const bad = items.length - valid.length;
     const web = mode === 'web';
+    const autoMode = web && AUTO_SUPPORTED;
 
     const parts = [`${list.length} / ${MAX} numbers`];
     if (dupes) parts.push(`${dupes} duplicate${dupes > 1 ? 's' : ''} removed`);
@@ -377,16 +381,19 @@
     });
     $('modeHint').textContent = web
       ? (isPhone ? 'Opens WhatsApp Web. On a phone, "WhatsApp app" works better.'
-                 : 'Opens WhatsApp Web in one browser tab. Log in there once with your phone.')
+                 : 'Opens each chat in a WhatsApp Web tab. Log in there once with your phone. Have the WhatsApp desktop app? Choose "WhatsApp app" instead.')
       : 'Opens the WhatsApp app on this phone or PC.';
-    $('autoBox').classList.toggle('hidden', !web);
+    $('autoBox').classList.toggle('hidden', !autoMode);
     $('autoMsg').textContent = auto.msg;
     $('autoMsg').classList.toggle('hidden', !auto.msg);
 
-    $('howNote').innerHTML = web
+    $('howNote').innerHTML = autoMode
       ? 'How it works: click <b>Start automatic</b>. A WhatsApp Web tab opens with your message ready. ' +
         'Press <b>Enter</b> there to send. Every few seconds the next chat opens in the same tab, so keep pressing Enter. ' +
         'Click <b>Pause</b> any time. Send only to people who know you.'
+      : web
+      ? 'How it works: click <b>Send to next</b>. A WhatsApp Web tab opens with your message ready. Press <b>Enter</b> to send, ' +
+        'close that tab, then come back here and click <b>Send to next</b> again. Send only to people who know you.'
       : 'How it works: tap <b>Send to next</b>. WhatsApp opens with your message ready. Tap Send in WhatsApp, ' +
         'then come back here and tap <b>Send to next</b> again. Send only to people who know you.';
 
@@ -433,8 +440,8 @@
 
     const autoBtn = $('autoBtn');
     const nextBtn = $('nextBtn');
-    autoBtn.classList.toggle('hidden', !web);
-    if (web) {
+    autoBtn.classList.toggle('hidden', !autoMode);
+    if (autoMode) {
       autoBtn.classList.toggle('pause', auto.on);
       $('autoLabel').textContent = auto.on ? 'Pause' : !next && valid.length ? 'All done' : (opened ? 'Continue automatic' : 'Start automatic');
       autoBtn.disabled = !auto.on && !ready;
@@ -457,7 +464,7 @@
   }
 
   function updateCountdown() {
-    if (!auto.on || mode !== 'web') return;
+    if (!auto.on || mode !== 'web' || !AUTO_SUPPORTED) return;
     const sec = Math.max(0, Math.ceil((auto.nextAt - Date.now()) / 1000));
     const valid = items.filter((x) => x.number);
     const opened = valid.filter((x) => done.has(x.number)).length;

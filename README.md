@@ -6,8 +6,7 @@ Send one WhatsApp message to many numbers (up to 200). Each message is sent to e
 
 ## Quick start
 
-- **On a computer, nothing to install:** open the link above, choose **WhatsApp Web**, and click **Start automatic**. A new chat opens every 10–20 seconds; you press **Enter** to send each one.
-- **On a phone:** open the link above and tap **Send to next** for each number.
+- **On a phone or computer, nothing to install:** open the link above, paste the numbers, write the message, and tap **Send to next** for each number.
 - **Fully automatic on a Windows PC, with photos or files:** click **Code → Download ZIP**, unzip it, and double-click `start.bat`.
 
 ## Which version?
@@ -18,7 +17,7 @@ There are two versions. Pick the one that fits you:
 |---|---|---|
 | Where | Any phone or computer, in the browser | A Windows 10 or 11 PC |
 | Install | Nothing. Just open the link | Node.js (`start.bat` helps you install it) |
-| Sending | Computer: opens each chat by itself every 10–20 s, you press Enter. Phone: one tap per number | Sends by itself, one by one, every 10–20 s |
+| Sending | One tap per number, then you press Send in WhatsApp | Sends by itself, one by one, every 10–20 s |
 | Photo or file | No, text only | Yes, one image or file with a caption |
 | Link | https://ovastaapp.github.io/whatsapp-bulk-sender/ | Download this repo |
 
@@ -38,20 +37,15 @@ There are two versions. Pick the one that fits you:
    - Duplicates are removed by themselves.
 3. **Message:** write your message. WhatsApp styles work: `*bold*`, `_italic_`, `~strike~`.
 
-### On a computer: automatic
-1. Under **Open each chat in**, choose **WhatsApp Web** (it's already chosen on computers).
-2. Set the wait between chats. The default is a random **10–20 seconds**.
-3. Click **Start automatic**.
-   - A WhatsApp Web tab opens with your message ready for the first number.
-   - The first time, log in to WhatsApp Web with your phone (Linked devices → Link a device).
-   - If your browser blocks the new tab, click **Allow pop-ups** for this page and click the button again.
-4. In the WhatsApp tab, press **Enter** to send.
-5. Every 10–20 seconds the next chat opens **in the same tab** by itself. Keep pressing **Enter** for each one.
-6. Click **Pause** any time, and **Continue automatic** to go on. It stops by itself when all chats are open.
+### On a computer
+1. Under **Open each chat in**, choose:
+   - **WhatsApp app** if you have the WhatsApp desktop app. Chats open in the app, with no extra tabs.
+   - **WhatsApp Web** otherwise. Each chat opens in a WhatsApp Web tab. The first time, log in there with your phone (Linked devices → Link a device).
+2. Click **Send to next**. The chat opens with your message ready.
+3. Press **Enter** to send. With WhatsApp Web, close that tab after sending.
+4. Come back to the page and click **Send to next** again. Repeat until it says **All done**.
 
-Keep the Tap to Send tab open while it runs. If you close the WhatsApp tab, it pauses.
-
-> The page opens each chat for you, but **you press Enter to send**. A website can't press Send inside WhatsApp, because browsers don't allow one site to control another. For sending with no key presses at all, use the Automatic Sender below.
+> A website can't open chats on a timer or press Send inside WhatsApp, because browsers don't let one site control another. For sending with no clicks at all, use the Automatic Sender below.
 
 ### On a phone: one tap per number
 1. Under **Open each chat in**, choose **WhatsApp app** (it's already chosen on phones).
@@ -60,7 +54,6 @@ Keep the Tap to Send tab open while it runs. If you close the WhatsApp tab, it p
 4. Come back to the page and tap **Send to next** again. Repeat until it says **All done**.
 
 ### Extra buttons
-- **Open next**: open the next chat right now, without waiting.
 - **Skip**: jump over the next number without opening it.
 - **Open** / **Again**: open a chat for one number on the list.
 - **Start over**: mark every number as not opened and begin again.
