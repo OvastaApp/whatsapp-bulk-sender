@@ -6,7 +6,8 @@ Send one WhatsApp message to many numbers (up to 200). Each message is sent to e
 
 ## Quick start
 
-- **On a phone, or with nothing to install:** open the link above, paste the numbers, write the message, and tap **Send to next** for each number.
+- **On a computer, nothing to install:** open the link above, choose **WhatsApp Web**, and click **Start automatic**. A new chat opens every 10–20 seconds; you press **Enter** to send each one.
+- **On a phone:** open the link above and tap **Send to next** for each number.
 - **Fully automatic on a Windows PC, with photos or files:** click **Code → Download ZIP**, unzip it, and double-click `start.bat`.
 
 ## Which version?
@@ -17,7 +18,7 @@ There are two versions. Pick the one that fits you:
 |---|---|---|
 | Where | Any phone or computer, in the browser | A Windows 10 or 11 PC |
 | Install | Nothing. Just open the link | Node.js (`start.bat` helps you install it) |
-| Sending | You tap once per number | Sends by itself, one by one |
+| Sending | Computer: opens each chat by itself every 10–20 s, you press Enter. Phone: one tap per number | Sends by itself, one by one, every 10–20 s |
 | Photo or file | No, text only | Yes, one image or file with a caption |
 | Link | https://ovastaapp.github.io/whatsapp-bulk-sender/ | Download this repo |
 
@@ -29,21 +30,37 @@ There are two versions. Pick the one that fits you:
 
 <p align="center"><img src="docs/images/tap-to-send-list.png" alt="Tap to Send on a phone: list of numbers with opened ones crossed out, and a big Send to next button" width="320"></p>
 
-### How to use it
-1. Open the link on your phone or computer.
+### Get ready (computer or phone)
+1. Open the link.
 2. **Phone numbers:** paste your numbers, one per line or separated by commas.
    - Numbers that start with `0` get the country code added. The default is `20` (Egypt). Change the box if your numbers are from another country.
    - Numbers with `+` or `00` are used as they are.
    - Duplicates are removed by themselves.
 3. **Message:** write your message. WhatsApp styles work: `*bold*`, `_italic_`, `~strike~`.
-4. **Open each chat in:**
-   - **WhatsApp app**: best on phones. It opens the WhatsApp app.
-   - **WhatsApp Web**: best on computers. It opens web.whatsapp.com in one tab. Log in there once with your phone.
-5. Tap **Send to next**. WhatsApp opens with your message ready for the first number.
-6. Tap **Send** in WhatsApp.
-7. Come back to the page and tap **Send to next** again. Repeat until it says **All done**.
+
+### On a computer: automatic
+1. Under **Open each chat in**, choose **WhatsApp Web** (it's already chosen on computers).
+2. Set the wait between chats. The default is a random **10–20 seconds**.
+3. Click **Start automatic**.
+   - A WhatsApp Web tab opens with your message ready for the first number.
+   - The first time, log in to WhatsApp Web with your phone (Linked devices → Link a device).
+   - If your browser blocks the new tab, click **Allow pop-ups** for this page and click the button again.
+4. In the WhatsApp tab, press **Enter** to send.
+5. Every 10–20 seconds the next chat opens **in the same tab** by itself. Keep pressing **Enter** for each one.
+6. Click **Pause** any time, and **Continue automatic** to go on. It stops by itself when all chats are open.
+
+Keep the Tap to Send tab open while it runs. If you close the WhatsApp tab, it pauses.
+
+> The page opens each chat for you, but **you press Enter to send**. A website can't press Send inside WhatsApp, because browsers don't allow one site to control another. For sending with no key presses at all, use the Automatic Sender below.
+
+### On a phone: one tap per number
+1. Under **Open each chat in**, choose **WhatsApp app** (it's already chosen on phones).
+2. Tap **Send to next**. WhatsApp opens with your message ready.
+3. Tap **Send** in WhatsApp.
+4. Come back to the page and tap **Send to next** again. Repeat until it says **All done**.
 
 ### Extra buttons
+- **Open next**: open the next chat right now, without waiting.
 - **Skip**: jump over the next number without opening it.
 - **Open** / **Again**: open a chat for one number on the list.
 - **Start over**: mark every number as not opened and begin again.
@@ -54,7 +71,7 @@ The page remembers your numbers, message and progress on your device, so you can
 
 ## 2. Automatic Sender (Windows app)
 
-It sends to every number by itself, waiting a few seconds between messages. You can attach one photo or file.
+It sends to every number by itself, waiting 10–20 seconds between messages. You don't press anything after **Start sending**. You can attach one photo or file.
 
 <p align="center"><img src="docs/images/automatic-sender.png" alt="Automatic Sender: connected WhatsApp, numbers and message, and live sending progress with Sent, Not on WhatsApp and Waiting statuses" width="640"></p>
 

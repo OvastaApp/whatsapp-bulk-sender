@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tap to Send</title>
-<meta name="description" content="Send one WhatsApp message to many numbers, one tap each, from your own WhatsApp. Nothing to install.">
+<meta name="description" content="Send one WhatsApp message to many numbers from your own WhatsApp. On a computer it opens each chat automatically. Nothing to install.">
 <style>
   :root {
     --bg: #f6f7f8;
@@ -17,6 +17,8 @@
     --green-soft: #e6f4ec;
     --red: #c0392b;
     --red-soft: #fbeaea;
+    --amber: #b86e00;
+    --amber-dark: #9a5c00;
     --amber-soft: #fdf2e1;
     --radius: 12px;
   }
@@ -27,14 +29,14 @@
     color: var(--text);
     font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Arabic", sans-serif;
   }
-  .wrap { max-width: 760px; margin: 0 auto; padding: 20px 16px 120px; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 20px 16px 130px; }
   h1 { font-size: 22px; margin: 0 0 4px; }
   .sub { color: var(--muted); margin: 0 0 18px; font-size: 14px; }
   h2 { font-size: 16px; margin: 0 0 12px; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; }
   label { display: block; font-weight: 600; margin-bottom: 6px; }
   .hint { color: var(--muted); font-size: 13px; font-weight: 400; }
-  textarea, input[type=text] {
+  textarea, input[type=text], input[type=number] {
     width: 100%; font: inherit; color: inherit; background: #fff;
     border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
   }
@@ -45,7 +47,7 @@
   .meta { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 6px; font-size: 13px; color: var(--muted); }
   .over { color: var(--red); font-weight: 600; }
   .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .cc { width: 80px !important; }
+  .cc, .sec { width: 80px !important; }
   .field { margin-bottom: 16px; }
   .field:last-child { margin-bottom: 0; }
 
@@ -53,6 +55,10 @@
   .seg button { border: 0; border-radius: 0; background: #fff; color: var(--text); font-weight: 600; padding: 9px 14px; }
   .seg button + button { border-left: 1px solid var(--line); }
   .seg button[aria-pressed="true"] { background: var(--green-soft); color: var(--green); }
+
+  .auto-box { margin-top: 14px; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: #fafbfc; }
+  .auto-box label { margin-bottom: 8px; }
+  .auto-msg { margin-top: 10px; background: var(--amber-soft); color: #6d4300; border-radius: 8px; padding: 8px 10px; font-size: 13px; }
 
   button { font: inherit; font-weight: 600; border-radius: 8px; padding: 10px 16px; border: 1px solid transparent; cursor: pointer; }
   button:disabled { opacity: .45; cursor: not-allowed; }
@@ -80,26 +86,30 @@
   .p-done { background: var(--green-soft); color: var(--green); }
   .p-bad { background: var(--red-soft); color: var(--red); }
   .p-next { background: var(--amber-soft); color: #8a5300; }
+  .p-skip { background: var(--line); color: var(--muted); }
   .empty { padding: 18px; text-align: center; color: var(--muted); font-size: 14px; }
 
   .note { background: var(--amber-soft); color: #6d4300; border-radius: 8px; padding: 10px 12px; font-size: 13px; }
 
-  /* sticky "next" bar */
+  /* sticky bottom bar */
   .dock {
     position: fixed; left: 0; right: 0; bottom: 0;
     background: rgba(255,255,255,.96); border-top: 1px solid var(--line);
     padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
   }
   .dock-in { max-width: 760px; margin: 0 auto; display: flex; gap: 10px; align-items: center; }
-  .next-btn { flex: 1; background: var(--green); color: #fff; padding: 14px 16px; font-size: 16px; border-radius: 10px; text-align: center; }
-  .next-btn:not(:disabled):hover { background: var(--green-dark); }
-  .next-btn small { display: block; font-weight: 400; opacity: .9; font-size: 13px; }
+  .main-btn { flex: 1; background: var(--green); color: #fff; padding: 14px 16px; font-size: 16px; border-radius: 10px; text-align: center; }
+  .main-btn:not(:disabled):hover { background: var(--green-dark); }
+  .main-btn.pause { background: var(--amber); }
+  .main-btn.pause:not(:disabled):hover { background: var(--amber-dark); }
+  .main-btn small { display: block; font-weight: 400; opacity: .92; font-size: 13px; }
+  .hidden { display: none !important; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Tap to Send</h1>
-  <p class="sub">Send one WhatsApp message to many numbers from your own WhatsApp. One tap each. Your numbers stay on your device.</p>
+  <p class="sub">Send one WhatsApp message to many numbers from your own WhatsApp. Your numbers stay on your device.</p>
 
   <section class="card">
     <div class="field">
@@ -125,6 +135,18 @@
         <button type="button" data-mode="web" aria-pressed="false">WhatsApp Web</button>
       </div>
       <div class="meta"><span id="modeHint"></span></div>
+
+      <div class="auto-box" id="autoBox">
+        <label>Automatic: open the next chat every</label>
+        <div class="row">
+          <input id="minWait" type="number" min="5" max="120" value="10" class="sec" aria-label="Shortest wait in seconds">
+          <span>to</span>
+          <input id="maxWait" type="number" min="5" max="180" value="20" class="sec" aria-label="Longest wait in seconds">
+          <span>seconds (random)</span>
+        </div>
+        <div class="meta"><span>Press <b>Enter</b> in the WhatsApp tab to send each message. Allow pop-ups if your browser asks.</span></div>
+        <div class="auto-msg hidden" id="autoMsg"></div>
+      </div>
     </div>
   </section>
 
@@ -140,10 +162,7 @@
     <div class="list" id="list"><div class="empty">Paste numbers above to see them here.</div></div>
   </section>
 
-  <p class="note">
-    How it works: tap <b>Send to next</b>. WhatsApp opens with your message ready. Tap Send in WhatsApp,
-    then come back here and tap <b>Send to next</b> again. Send only to people who know you.
-  </p>
+  <p class="note" id="howNote"></p>
   <p class="hint" style="text-align:center;margin-top:18px">
     Free and open source ·
     <a href="https://github.com/OvastaApp/whatsapp-bulk-sender" style="color:var(--green)">How to use &amp; source on GitHub</a>
@@ -152,7 +171,8 @@
 
 <div class="dock">
   <div class="dock-in">
-    <button type="button" class="next-btn" id="nextBtn" disabled>Send to next<small id="nextSub">Add numbers and a message</small></button>
+    <button type="button" class="main-btn" id="autoBtn" disabled><span id="autoLabel">Start automatic</span><small id="autoSub"></small></button>
+    <button type="button" class="main-btn" id="nextBtn" disabled><span id="nextLabel">Send to next</span><small id="nextSub">Add numbers and a message</small></button>
     <button type="button" class="btn-ghost" id="skipBtn" disabled>Skip</button>
   </div>
 </div>
@@ -162,12 +182,30 @@
   const $ = (id) => document.getElementById(id);
   const MAX = 200;
   const STORE = 'tap-to-send.v1';
+  const WA_TAB = 'tap_to_send_whatsapp';
   const isPhone = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 
   let done = new Set();     // numbers already opened
   let skipped = new Set();  // numbers skipped
   let mode = isPhone ? 'app' : 'web';
   let items = [];
+
+  // Automatic mode (computer + WhatsApp Web): opens the next chat in the same tab on a timer.
+  const auto = { on: false, win: null, nextAt: 0, msg: '' };
+
+  // The timer runs in a Web Worker: browsers slow down timers in background tabs a lot, workers much less.
+  let ticker = null;
+  let fallbackTimer = null;
+  try {
+    const src = 'var t=null;onmessage=function(e){clearTimeout(t);if(e.data>0)t=setTimeout(function(){postMessage(1)},e.data)}';
+    ticker = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+    ticker.onmessage = () => autoTick();
+  } catch (e) { ticker = null; }
+  function schedule(ms) {
+    if (ticker) { ticker.postMessage(ms); return; }
+    clearTimeout(fallbackTimer);
+    if (ms > 0) fallbackTimer = setTimeout(autoTick, ms);
+  }
 
   // ---- saved state (per device, best effort) ----
   function load() {
@@ -178,6 +216,8 @@
       $('message').value = s.message || '';
       if (s.cc != null) $('cc').value = s.cc;
       if (s.mode === 'app' || s.mode === 'web') mode = s.mode;
+      if (s.minWait) $('minWait').value = s.minWait;
+      if (s.maxWait) $('maxWait').value = s.maxWait;
       done = new Set(s.done || []);
       skipped = new Set(s.skipped || []);
     } catch (e) { /* storage blocked: start fresh */ }
@@ -186,7 +226,8 @@
     try {
       localStorage.setItem(STORE, JSON.stringify({
         numbers: $('numbers').value, message: $('message').value, cc: $('cc').value,
-        mode, done: [...done], skipped: [...skipped],
+        mode, minWait: $('minWait').value, maxWait: $('maxWait').value,
+        done: [...done], skipped: [...skipped],
       }));
     } catch (e) { /* ignore */ }
   }
@@ -225,6 +266,15 @@
     return { list: out, dupes };
   }
 
+  const hasMessage = () => !!$('message').value.trim();
+  const nextItem = () => items.find((x) => x.number && !done.has(x.number) && !skipped.has(x.number));
+
+  function waits() {
+    const min = Math.min(120, Math.max(5, Number($('minWait').value) || 10));
+    const max = Math.min(180, Math.max(min, Number($('maxWait').value) || 20));
+    return { min, max };
+  }
+
   function chatUrl(number) {
     const text = encodeURIComponent($('message').value.trim());
     return mode === 'app'
@@ -232,13 +282,77 @@
       : `https://web.whatsapp.com/send?phone=${number}&text=${text}`;
   }
 
-  function openChat(number) {
-    const url = chatUrl(number);
-    if (mode === 'app') window.location.href = url;          // opens the app, this page stays
-    else window.open(url, 'tap_to_send_whatsapp');            // reuses one WhatsApp Web tab
+  function markOpened(number) {
     done.add(number);
     skipped.delete(number);
     save();
+  }
+
+  // ---- manual: one chat per tap ----
+  function openChat(number) {
+    const url = chatUrl(number);
+    if (mode === 'app') {
+      window.location.href = url;                 // opens the app, this page stays
+    } else {
+      const w = window.open(url, WA_TAB);          // reuses one WhatsApp Web tab
+      if (w) auto.win = w;
+    }
+    markOpened(number);
+    if (auto.on) scheduleNext(); else render();
+  }
+
+  // ---- automatic: computer + WhatsApp Web ----
+  function startAuto() {
+    const next = nextItem();
+    if (!next || !hasMessage()) return;
+    const w = window.open(chatUrl(next.number), WA_TAB);
+    if (!w) {
+      auto.msg = 'Your browser blocked the WhatsApp tab. Allow pop-ups for this page, then click the green button again.';
+      render();
+      return;
+    }
+    auto.win = w;
+    auto.on = true;
+    auto.msg = '';
+    markOpened(next.number);
+    scheduleNext();
+  }
+
+  function scheduleNext() {
+    if (!nextItem()) {
+      stopAuto('All chats are open. Press Enter in WhatsApp to send the last message.');
+      return;
+    }
+    const { min, max } = waits();
+    const ms = Math.round((min + Math.random() * (max - min)) * 1000);
+    auto.nextAt = Date.now() + ms;
+    schedule(ms);
+    render();
+  }
+
+  function autoTick() {
+    if (!auto.on) return;
+    if (!auto.win || auto.win.closed) {
+      stopAuto('The WhatsApp tab was closed. Click Continue automatic to go on.');
+      return;
+    }
+    const next = nextItem();
+    if (!next) { stopAuto('All chats are open.'); return; }
+    try {
+      auto.win.location.href = chatUrl(next.number);
+    } catch (e) {
+      stopAuto('Could not open the next chat. Click Continue automatic to go on.');
+      return;
+    }
+    markOpened(next.number);
+    scheduleNext();
+  }
+
+  function stopAuto(msg) {
+    auto.on = false;
+    auto.nextAt = 0;
+    auto.msg = msg || '';
+    schedule(0);
     render();
   }
 
@@ -248,6 +362,7 @@
     items = list.slice(0, MAX);
     const valid = items.filter((x) => x.number);
     const bad = items.length - valid.length;
+    const web = mode === 'web';
 
     const parts = [`${list.length} / ${MAX} numbers`];
     if (dupes) parts.push(`${dupes} duplicate${dupes > 1 ? 's' : ''} removed`);
@@ -256,21 +371,33 @@
     $('count').classList.toggle('over', list.length > MAX);
     $('chars').textContent = `${$('message').value.trim().length} characters`;
 
-    document.querySelectorAll('.seg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
-    $('modeHint').textContent = mode === 'app'
-      ? 'Opens the WhatsApp app on this phone or PC.'
-      : 'Opens WhatsApp Web in one browser tab. Log in there once with your phone.';
+    document.querySelectorAll('.seg button').forEach((b) => {
+      b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
+      b.disabled = auto.on;
+    });
+    $('modeHint').textContent = web
+      ? (isPhone ? 'Opens WhatsApp Web. On a phone, "WhatsApp app" works better.'
+                 : 'Opens WhatsApp Web in one browser tab. Log in there once with your phone.')
+      : 'Opens the WhatsApp app on this phone or PC.';
+    $('autoBox').classList.toggle('hidden', !web);
+    $('autoMsg').textContent = auto.msg;
+    $('autoMsg').classList.toggle('hidden', !auto.msg);
+
+    $('howNote').innerHTML = web
+      ? 'How it works: click <b>Start automatic</b>. A WhatsApp Web tab opens with your message ready. ' +
+        'Press <b>Enter</b> there to send. Every few seconds the next chat opens in the same tab, so keep pressing Enter. ' +
+        'Click <b>Pause</b> any time. Send only to people who know you.'
+      : 'How it works: tap <b>Send to next</b>. WhatsApp opens with your message ready. Tap Send in WhatsApp, ' +
+        'then come back here and tap <b>Send to next</b> again. Send only to people who know you.';
 
     const opened = valid.filter((x) => done.has(x.number)).length;
-    const next = valid.find((x) => !done.has(x.number) && !skipped.has(x.number));
+    const next = nextItem();
     $('barFill').style.width = valid.length ? `${(opened / valid.length) * 100}%` : '0';
     $('progressText').textContent = valid.length ? `${opened} of ${valid.length} opened` : '';
 
     const listEl = $('list');
     listEl.innerHTML = '';
-    if (!items.length) {
-      listEl.innerHTML = '<div class="empty">Paste numbers above to see them here.</div>';
-    }
+    if (!items.length) listEl.innerHTML = '<div class="empty">Paste numbers above to see them here.</div>';
     items.forEach((it, i) => {
       const row = document.createElement('div');
       row.className = 'item';
@@ -278,58 +405,83 @@
       const num = document.createElement('span'); num.className = 'num';
       num.textContent = it.number ? '+' + it.number : it.raw;
       row.append(n, num);
+      const pill = (cls, text) => { const p = document.createElement('span'); p.className = 'pill ' + cls; p.textContent = text; row.append(p); };
       if (!it.number) {
         row.classList.add('bad');
-        const p = document.createElement('span'); p.className = 'pill p-bad'; p.textContent = 'Invalid';
-        row.append(p);
+        pill('p-bad', 'Invalid');
       } else {
-        if (done.has(it.number)) {
-          row.classList.add('done');
-          const p = document.createElement('span'); p.className = 'pill p-done'; p.textContent = 'Opened';
-          row.append(p);
-        } else if (skipped.has(it.number)) {
-          const p = document.createElement('span'); p.className = 'pill'; p.textContent = 'Skipped';
-          p.style.background = 'var(--line)'; p.style.color = 'var(--muted)';
-          row.append(p);
-        } else if (next && next.number === it.number) {
-          const p = document.createElement('span'); p.className = 'pill p-next'; p.textContent = 'Next';
-          row.append(p);
-        }
+        if (done.has(it.number)) { row.classList.add('done'); pill('p-done', 'Opened'); }
+        else if (skipped.has(it.number)) pill('p-skip', 'Skipped');
+        else if (next && next.number === it.number) pill('p-next', 'Next');
         const b = document.createElement('button');
         b.type = 'button'; b.className = 'btn-ghost btn-sm';
         b.textContent = done.has(it.number) ? 'Again' : 'Open';
-        b.disabled = !$('message').value.trim();
+        b.disabled = !hasMessage();
         b.onclick = () => openChat(it.number);
         row.append(b);
       }
       listEl.append(row);
     });
 
-    const hasMsg = !!$('message').value.trim();
+    // bottom bar
+    const ready = !!next && hasMessage();
+    let status;
+    if (!valid.length) status = 'Add numbers and a message';
+    else if (!hasMessage()) status = 'Write a message first';
+    else if (!next) status = skipped.size ? 'All done (some skipped)' : 'All done';
+    else status = `+${next.number} · ${valid.indexOf(next) + 1} of ${valid.length}`;
+
+    const autoBtn = $('autoBtn');
     const nextBtn = $('nextBtn');
-    nextBtn.disabled = !next || !hasMsg;
+    autoBtn.classList.toggle('hidden', !web);
+    if (web) {
+      autoBtn.classList.toggle('pause', auto.on);
+      $('autoLabel').textContent = auto.on ? 'Pause' : !next && valid.length ? 'All done' : (opened ? 'Continue automatic' : 'Start automatic');
+      autoBtn.disabled = !auto.on && !ready;
+      if (!auto.on) {
+        const { min, max } = waits();
+        $('autoSub').textContent = ready ? `A new chat every ${min}–${max} s · you press Enter` : status;
+      }
+      nextBtn.className = 'btn-ghost';
+      $('nextLabel').textContent = 'Open next';
+      $('nextSub').classList.add('hidden');
+    } else {
+      nextBtn.className = 'main-btn';
+      $('nextLabel').textContent = 'Send to next';
+      $('nextSub').classList.remove('hidden');
+      $('nextSub').textContent = status;
+    }
+    nextBtn.disabled = !ready;
     $('skipBtn').disabled = !next;
-    if (!valid.length) $('nextSub').textContent = 'Add numbers and a message';
-    else if (!hasMsg) $('nextSub').textContent = 'Write a message first';
-    else if (!next) $('nextSub').textContent = skipped.size ? 'All done (some skipped)' : 'All done';
-    else $('nextSub').textContent = `+${next.number} · ${valid.indexOf(next) + 1} of ${valid.length}`;
+    updateCountdown();
   }
 
-  $('nextBtn').onclick = () => {
-    const next = items.find((x) => x.number && !done.has(x.number) && !skipped.has(x.number));
-    if (next) openChat(next.number);
-  };
+  function updateCountdown() {
+    if (!auto.on || mode !== 'web') return;
+    const sec = Math.max(0, Math.ceil((auto.nextAt - Date.now()) / 1000));
+    const valid = items.filter((x) => x.number);
+    const opened = valid.filter((x) => done.has(x.number)).length;
+    $('autoSub').textContent = `Next chat in ${sec}s · ${opened} of ${valid.length} opened`;
+  }
+  setInterval(updateCountdown, 500);
+
+  $('autoBtn').onclick = () => { if (auto.on) stopAuto('Paused. Click Continue automatic to go on.'); else startAuto(); };
+  $('nextBtn').onclick = () => { const next = nextItem(); if (next) openChat(next.number); };
   $('skipBtn').onclick = () => {
-    const next = items.find((x) => x.number && !done.has(x.number) && !skipped.has(x.number));
-    if (next) { skipped.add(next.number); save(); render(); }
+    const next = nextItem();
+    if (!next) return;
+    skipped.add(next.number);
+    save();
+    if (auto.on && !nextItem()) stopAuto('All chats are open.'); else render();
   };
   $('resetBtn').onclick = () => {
     if (!done.size && !skipped.size) return;
     if (!confirm('Mark all numbers as not opened and start from the first one?')) return;
+    if (auto.on) stopAuto('');
     done.clear(); skipped.clear(); save(); render();
   };
-  document.querySelectorAll('.seg button').forEach((b) => b.onclick = () => { mode = b.dataset.mode; save(); render(); });
-  ['numbers', 'message', 'cc'].forEach((id) => $(id).addEventListener('input', () => { save(); render(); }));
+  document.querySelectorAll('.seg button').forEach((b) => b.onclick = () => { mode = b.dataset.mode; auto.msg = ''; save(); render(); });
+  ['numbers', 'message', 'cc', 'minWait', 'maxWait'].forEach((id) => $(id).addEventListener('input', () => { save(); render(); }));
 
   load();
   render();
